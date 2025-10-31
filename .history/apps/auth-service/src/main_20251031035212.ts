@@ -23,7 +23,3 @@ app.get('/', (req, res) => {
 app.listen(port, host, () => {
   console.log(`[ ready ] http://${host}:${port}/api`);
 });
-
-Server.on('error', (err) => {
-  console.error('Server error:', err);
-}); 
