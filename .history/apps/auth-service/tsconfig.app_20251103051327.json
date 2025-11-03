@@ -1,13 +1,17 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "types": ["node"],
-    "rootDir": "../../",
-    "resolveJsonModule": true,
+    "outDir": "../../dist/out-tsc",
+    "rootDir": "src",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo"
+    "strict": true,
+    "types": ["node"],
+    "tsBuildInfoFile": "../../dist/out-tsc/tsconfig.app.tsbuildinfo"
   },
   "include": [
     "src/**/*.ts",

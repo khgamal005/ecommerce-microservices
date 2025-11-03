@@ -4,7 +4,6 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { errorMiddleware } from '../../../packages/error-handler/error-middleware';
 import swaggerUi from 'swagger-ui-express';
-import swaggerDocument from './swagger-output.json';
 import router from './routes/auth.router';
 
 // console.log('DATABASE_URL:', process.env.DATABASE_URL); // ✅ log DB URL for debug
@@ -31,7 +30,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/api', router);
 
 // ------------------------
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocumen));
 app.get('/docs-json', (req, res) => {
   res.json(swaggerDocument);
 });

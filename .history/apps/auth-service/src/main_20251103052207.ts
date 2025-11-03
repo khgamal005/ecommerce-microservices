@@ -4,7 +4,6 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { errorMiddleware } from '../../../packages/error-handler/error-middleware';
 import swaggerUi from 'swagger-ui-express';
-import swaggerDocument from './swagger-output.json';
 import router from './routes/auth.router';
 
 // console.log('DATABASE_URL:', process.env.DATABASE_URL); // ✅ log DB URL for debug
