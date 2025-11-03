@@ -4,14 +4,17 @@
     "outDir": "dist",
     "types": ["node"],
     "rootDir": "../../",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo"
   },
-"include": [
-  "src/**/*.ts",
-  "../../packages/**/*"
-],
-
-"exclude": [
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.json",
+    "../../packages/**/*"
+  ],
+  "exclude": [
     "out-tsc",
     "dist",
     "jest.config.ts",
