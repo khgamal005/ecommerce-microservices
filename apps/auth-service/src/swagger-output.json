@@ -6,7 +6,7 @@
     "description": "API documentation for Auth Service"
   },
   "host": "localhost:6001",
-  "basePath": "/",
+  "basePath": "/api",
   "schemes": [
     "http"
   ],
@@ -22,10 +22,10 @@
               "type": "object",
               "properties": {
                 "name": {
-                  "example": "khaled"
+                  "example": "any"
                 },
                 "email": {
-                  "example": "khgamal005@gmail.com"
+                  "example": "any"
                 }
               }
             }
@@ -38,8 +38,5 @@
         }
       }
     }
-  },
-  "schemas": [
-    "http"
-  ]
+  }
 }

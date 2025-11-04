@@ -1,17 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
-    "rootDir": "../../",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "ES2022",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "outDir": "dist",
+    "rootDir": "src",
     "types": ["node"],
-    "tsBuildInfoFile": "../../dist/out-tsc/tsconfig.app.tsbuildinfo"
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo"
   },
   "include": [
     "src/**/*.ts",
@@ -24,5 +20,8 @@
     "jest.config.ts",
     "src/**/*.spec.ts",
     "src/**/*.test.ts"
+  ],
+  "files": [
+    "src/swagger-output.json"
   ]
 }

@@ -2,22 +2,26 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["node"],
     "rootDir": "../../",
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo"
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.json", // ✅ Add this line
-
+    "src/**/*.json",
     "../../packages/**/*"
   ],
-
   "exclude": [
     "out-tsc",
     "dist",
     "jest.config.ts",
     "src/**/*.spec.ts",
     "src/**/*.test.ts"
+  ],
+  "files": [
+    "src/swagger-output.json"
   ]
 }
