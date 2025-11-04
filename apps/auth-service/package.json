@@ -2,9 +2,15 @@
   "name": "@my-app/auth-service",
   "version": "0.0.1",
   "private": true,
-
   "nx": {
     "targets": {
+      "swagger-generate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node apps/auth-service/src/swagger.js",
+          "cwd": "{workspaceRoot}"
+        }
+      },
       "build": {
         "executor": "@nx/esbuild:esbuild",
         "outputs": [
@@ -21,7 +27,12 @@
           "main": "apps/auth-service/src/main.ts",
           "tsConfig": "apps/auth-service/tsconfig.app.json",
           "assets": [
-            "apps/auth-service/src/assets"
+            "apps/auth-service/src/assets",
+            {
+              "input": "apps/auth-service/src",
+              "glob": "swagger-output.json",
+              "output": "."
+            }
           ],
           "esbuildOptions": {
             "sourcemap": true,
@@ -41,7 +52,10 @@
               }
             }
           }
-        }
+        },
+        "dependsOn": [
+          "swagger-generate"
+        ]
       },
       "prune-lockfile": {
         "dependsOn": [

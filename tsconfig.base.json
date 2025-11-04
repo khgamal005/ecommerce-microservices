@@ -16,6 +16,12 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@my-app/source"]
+    "customConditions": ["@my-app/source"],
+
+    "baseUrl": ".",                // ✅ important for paths
+    "paths": {
+      "@libs/prisma": ["packages/libs/prisma/index.ts"]
+    }
   }
 }
+

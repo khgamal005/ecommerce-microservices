@@ -56,6 +56,12 @@
     },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "build": {
+      "dependsOn": ["prisma-generate"]
+    },
+    "serve": {
+      "dependsOn": ["prisma-generate"]
     }
   }
 }

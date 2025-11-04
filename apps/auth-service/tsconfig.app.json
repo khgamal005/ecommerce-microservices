@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["node"],
     "rootDir": "../../",
+    "types": ["node"],
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -20,5 +20,8 @@
     "jest.config.ts",
     "src/**/*.spec.ts",
     "src/**/*.test.ts"
+  ],
+  "files": [
+    "src/swagger-output.json"
   ]
 }
