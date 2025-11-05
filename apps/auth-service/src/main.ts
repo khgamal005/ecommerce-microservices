@@ -42,8 +42,10 @@ const swaggerPath = path.join(
 
 if (fs.existsSync(swaggerPath)) {
   const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'));
+
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   app.get('/docs-json', (_, res) => res.json(swaggerDocument));
+
   console.log(`✅ Swagger loaded from: ${swaggerPath}`);
 } else {
   console.warn('⚠️ Swagger file not found at:', swaggerPath);
@@ -71,7 +73,7 @@ server.on('error', (err) => console.error('Server error:', err));
 // =======================
 // 🧹 Graceful Shutdown
 // =======================
-process.on('SIGINT', () => {
+process.on('SIGIN', () => {
   console.log('Shutting down auth-service...');
   server.close(() => process.exit(0));
 });
