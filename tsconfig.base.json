@@ -5,6 +5,8 @@
     "emitDeclarationOnly": true,
     "importHelpers": true,
     "isolatedModules": true,
+        "baseUrl": ".",                // ✅ important for paths
+
     "lib": ["es2022"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
@@ -18,9 +20,10 @@
     "target": "es2022",
     "customConditions": ["@my-app/source"],
 
-    "baseUrl": ".",                // ✅ important for paths
     "paths": {
-      "@libs/prisma": ["packages/libs/prisma/index.ts"]
+      // "@libs/prisma": ["packages/libs/prisma/index.ts"],
+      // "@libs/*": ["packages/libs/*/src/index.ts"],
+      "@packages/*": ["packages/*"]
     }
   }
 }
