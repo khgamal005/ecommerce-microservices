@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "node dist/apps/auth-service/main.js"
+    "dev": "node src/main.ts"
   },
   "nx": {
     "name": "auth-service",
@@ -41,18 +41,15 @@
           "format": ["cjs"],
           "platform": "node"
         },
-        "dependsOn": [
-          {
-            "target": "prisma-generate",
-            "projects": "self"
+        "configurations": {
+          "development": {
+            "minify": false,
+            "sourceMap": true
+          },
+          "production": {
+            "minify": true,
+            "sourceMap": false
           }
-        ]
-      },
-      "prisma-generate": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "npx prisma generate",
-          "cwd": "packages/libs/prisma"
         }
       },
       "test": {

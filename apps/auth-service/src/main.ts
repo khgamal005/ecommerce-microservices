@@ -2,10 +2,10 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import path from 'path';
-import fs from 'fs';
 import swaggerUi from 'swagger-ui-express';
-import { errorMiddleware } from '../../../packages/error-handler/error-middleware';
+
+import { errorMiddleware } from '@packages/error-handler/error-middleware';
+const swaggerDocument = require('./swagger-output.json');
 import router from './routes/auth.router';
 
 const app = express();
@@ -30,27 +30,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/api', router);
 
 // =======================
-// 📘 Swagger Setup
+// 📘 Swagger Docs
 // =======================
-const swaggerPath = path.join(
-  process.cwd(),
-  'apps',
-  'auth-service',
-  'src',
-  'swagger-output.json'
-);
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.get('/docs-json', (_, res) => res.json(swaggerDocument));
 
-if (fs.existsSync(swaggerPath)) {
-  const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'));
-
-  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-  app.get('/docs-json', (_, res) => res.json(swaggerDocument));
-
-  console.log(`✅ Swagger loaded from: ${swaggerPath}`);
-} else {
-  console.warn('⚠️ Swagger file not found at:', swaggerPath);
-  console.warn('   Please run the Swagger generator first.');
-}
+console.log('✅ Swagger loaded successfully.');
 
 // =======================
 // 🏠 Root & Error Middleware
@@ -73,7 +58,7 @@ server.on('error', (err) => console.error('Server error:', err));
 // =======================
 // 🧹 Graceful Shutdown
 // =======================
-process.on('SIGIN', () => {
+process.on('SIGINT', () => {
   console.log('Shutting down auth-service...');
   server.close(() => process.exit(0));
 });

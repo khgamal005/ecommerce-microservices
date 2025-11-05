@@ -37,27 +37,17 @@
           "assets": [
             "apps/auth-service/src/assets",
             "apps/auth-service/src/swagger-output.json"
-          ],
-          "format": ["cjs"],
-          "platform": "node"
+          ]
         },
-        "dependsOn": [
-          {
-            "target": "prisma-generate",
-            "projects": "self"
+        "configurations": {
+          "development": {
+            "minify": false,
+            "sourceMap": true
+          },
+          "production": {
+            "minify": true,
+            "sourceMap": false
           }
-        ]
-      },
-      "prisma-generate": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "npx prisma generate",
-          "cwd": "packages/libs/prisma"
-        }
-      },
-      "test": {
-        "options": {
-          "passWithNoTests": true
         }
       }
     }

@@ -3,12 +3,18 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "node dist/apps/auth-service/main.js"
+    "dev": "node src/main.ts"
   },
   "nx": {
     "name": "auth-service",
-    "sourceRoot": "apps/auth-service/src",
-    "projectType": "application",
+    "version": "0.0.1",
+    "private": true,
+    "nx": {
+      "name": "auth-service",
+      "sourceRoot": "auth-service/src",
+          "projectType": "application",
+
+
     "targets": {
       "serve": {
         "executor": "@nx/js:node",
@@ -17,7 +23,11 @@
         "options": {
           "buildTarget": "auth-service:build",
           "runBuildTargetDependencies": false
-        },
+        }
+      },
+      "build": {
+        "executor": "@nx/esbuild:esbuild",
+        "outputs": ["{options.outputPath}"],
         "configurations": {
           "development": {
             "buildTarget": "auth-service:build:development"
@@ -25,34 +35,12 @@
           "production": {
             "buildTarget": "auth-service:build:production"
           }
-        }
-      },
-      "build": {
-        "executor": "@nx/esbuild:esbuild",
-        "outputs": ["{options.outputPath}"],
+        },
         "options": {
           "outputPath": "dist/apps/auth-service",
           "main": "apps/auth-service/src/main.ts",
           "tsConfig": "apps/auth-service/tsconfig.app.json",
-          "assets": [
-            "apps/auth-service/src/assets",
-            "apps/auth-service/src/swagger-output.json"
-          ],
-          "format": ["cjs"],
-          "platform": "node"
-        },
-        "dependsOn": [
-          {
-            "target": "prisma-generate",
-            "projects": "self"
-          }
-        ]
-      },
-      "prisma-generate": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "npx prisma generate",
-          "cwd": "packages/libs/prisma"
+          "assets": ["apps/auth-service/src/assets"]
         }
       },
       "test": {

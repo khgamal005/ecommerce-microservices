@@ -3,9 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "nx": {
-    "implicitDependencies": [
-      "@my-app/auth-service"
-    ],
     "targets": {
       "e2e": {
         "executor": "@nx/jest:jest",
@@ -15,11 +12,7 @@
         "options": {
           "jestConfig": "apps/auth-service-e2e/jest.config.ts",
           "passWithNoTests": true
-        },
-        "dependsOn": [
-          "@my-app/auth-service:build",
-          "@my-app/auth-service:serve"
-        ]
+        }
       }
     }
   }

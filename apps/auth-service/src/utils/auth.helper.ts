@@ -1,7 +1,7 @@
-import { ValidationError } from '../../../../packages/error-handler';
+import { ValidationError } from '@packages/error-handler';
 import crypto from 'node:crypto';
 import { NextFunction } from 'express';
-import redis from '../../../../packages/libs/prisma/redis';
+import redis from '@packages/libs/prisma/redis';
 import { sendEmail } from './sendEmail';
 
 export const validationRegistrationUser = (
