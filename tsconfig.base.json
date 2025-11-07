@@ -21,8 +21,7 @@
     "customConditions": ["@my-app/source"],
 
     "paths": {
-      // "@libs/prisma": ["packages/libs/prisma/index.ts"],
-      // "@libs/*": ["packages/libs/*/src/index.ts"],
+
       "@packages/*": ["packages/*"]
     }
   }

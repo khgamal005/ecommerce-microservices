@@ -1,0 +1,77 @@
+{
+  "name": "@my-app/auth-service",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "node dist/apps/auth-service/main.js"
+  },
+  "nx": {
+    "name": "auth-service",
+    "sourceRoot": "apps/auth-service/src",
+    "projectType": "application",
+    "targets": {
+      "serve": {
+        "executor": "@nx/js:node",
+        "defaultConfiguration": "development",
+        "dependsOn": ["build"],
+        "options": {
+          "buildTarget": "auth-service:build",
+          "runBuildTargetDependencies": false,
+          "inspect": false
+        },
+        "configurations": {
+          "development": {
+            "buildTarget": "auth-service:build:development"
+          },
+          "production": {
+            "buildTarget": "auth-service:build:production"
+          }
+        }
+      },
+      "build": {
+        "executor": "@nx/esbuild:esbuild",
+        "outputs": ["{options.outputPath}"],
+        "options": {
+          "outputPath": "dist/apps/auth-service",
+          "main": "apps/auth-service/src/main.ts",
+          "tsConfig": "apps/auth-service/tsconfig.app.json",
+"assets": [
+  "apps/auth-service/src/assets",
+  "apps/auth-service/src/utils/emailTemplates",
+  {
+    "input": "apps/auth-service/src/utils/emailTemplate",
+    "glob": "**/*",
+    "output": "apps/auth-service/src/utils/emailTemplate"
+  },
+  {
+    "input": "packages/libs/prisma",
+    "glob": "**/*.prisma",
+    "output": "packages/libs/prisma"
+  }
+],
+          "format": ["cjs"],
+          "platform": "node",
+          "bundle": true
+        },
+        "dependsOn": [
+          {
+            "target": "prisma-generate",
+            "projects": "self"
+          }
+        ]
+      },
+      "prisma-generate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx prisma generate --schema=prisma/schema.prisma",
+          "cwd": "."
+        }
+      },
+      "test": {
+        "options": {
+          "passWithNoTests": true
+        }
+      }
+    }
+  }
+}

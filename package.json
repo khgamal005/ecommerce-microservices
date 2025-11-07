@@ -4,16 +4,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "npx nx run-many --target=serve --all",
-    "prisma:generate": "npx nx run-many --target=prisma-generate --all",
-    "prisma:migrate": "prisma migrate dev --schema=packages/libs/prisma/schema.prisma",
-    "auth-service:serve": "npx nx serve auth-service",
-    "auth-service:prisma-generate": "npx nx prisma-generate auth-service",  
-      "build:auth": "node apps/auth-service/src/swagger.js && nx build auth-service"
-
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma"
   },
   "private": true,
   "dependencies": {
-    "@prisma/client": "^6.18.0",
     "axios": "^1.13.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
@@ -38,6 +32,7 @@
     "@nx/js": "22.0.2",
     "@nx/node": "^22.0.2",
     "@nx/workspace": "22.0.2",
+    "@prisma/client": "^6.19.0",
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
@@ -58,7 +53,7 @@
     "jest-util": "^30.0.2",
     "nx": "22.0.2",
     "prettier": "^2.6.2",
-    "prisma": "^6.18.0",
+    "prisma": "^6.19.0",
     "ts-jest": "^29.4.0",
     "ts-node": "10.9.1",
     "tslib": "^2.3.0",
