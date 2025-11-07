@@ -16,7 +16,8 @@
         "dependsOn": ["build"],
         "options": {
           "buildTarget": "auth-service:build",
-          "runBuildTargetDependencies": false
+          "runBuildTargetDependencies": false,
+          "inspect": false
         },
         "configurations": {
           "development": {
@@ -34,12 +35,22 @@
           "outputPath": "dist/apps/auth-service",
           "main": "apps/auth-service/src/main.ts",
           "tsConfig": "apps/auth-service/tsconfig.app.json",
-          "assets": [
-            "apps/auth-service/src/assets",
-            "apps/auth-service/src/swagger-output.json"
-          ],
+"assets": [
+  "apps/auth-service/src/assets",
+  {
+    "input": "apps/auth-service/src/utils/emailTemplate",
+    "glob": "**/*",
+    "output": "apps/auth-service/src/utils/emailTemplate"
+  },
+  {
+    "input": "packages/libs/prisma",
+    "glob": "**/*.prisma",
+    "output": "packages/libs/prisma"
+  }
+],
           "format": ["cjs"],
-          "platform": "node"
+          "platform": "node",
+          "bundle": true
         },
         "dependsOn": [
           {
@@ -51,8 +62,8 @@
       "prisma-generate": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "npx prisma generate",
-          "cwd": "packages/libs/prisma"
+          "command": "npx prisma generate --schema=prisma/schema.prisma",
+          "cwd": "."
         }
       },
       "test": {

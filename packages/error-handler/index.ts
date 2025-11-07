@@ -7,14 +7,14 @@ export class ApiError extends Error {
   constructor(
     message: string,
     statusCode: number,
+    details?: any,
     isOperational = true,
-    details?: any
   ) {
     super(message);
 
     this.statusCode = statusCode;
-    this.isOperational = true;
     this.details = details;
+    this.isOperational = isOperational;
     Error.captureStackTrace(this);
   }
 }

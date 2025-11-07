@@ -8,7 +8,7 @@ module.exports = {
   target: 'node',
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
 
-  entry: './src/main.ts', // 👈 your main file
+  entry: './src/main.ts',
   output: {
     path: path.join(__dirname, 'dist'),
     filename: 'main.js',
@@ -19,20 +19,34 @@ module.exports = {
     alias: {
       '@packages': path.resolve(__dirname, '../../packages'),
     },
-    extensions: ['.ts', '.js'],
+    extensions: ['.ts', '.js', '.json'], // ✅ include .json
+  },
+
+  module: {
+    rules: [
+      {
+        test: /\.json$/i,
+        type: 'asset/resource', // ✅ treat JSON as asset
+        generator: {
+          filename: '[name][ext]', // copies swagger-output.json to dist
+        },
+      },
+    ],
   },
 
   plugins: [
     new NxAppWebpackPlugin({
-    target: 'node',
-         compiler: 'tsc', // uses TypeScript compiler instead of SWC
-         tsconfigPath: path.join(__dirname, 'tsconfig.app.json'),
-         main: './src/main.ts',
-         tsconfig:'./tsconfig.app.json',
-         assets: ['src/assets'],
-         optimization: false,
-         outputHashing: 'none',
-         generatePackageJson: true,
+      target: 'node',
+      compiler: 'tsc',
+      tsconfigPath: path.join(__dirname, 'tsconfig.app.json'),
+      main: './src/main.ts',
+      tsconfig: './tsconfig.app.json',
+      assets: ['src/assets',
+         'src/swagger-output.json',
+        ], 
+      optimization: false,
+      outputHashing: 'none',
+      generatePackageJson: true,
     }),
   ],
 };

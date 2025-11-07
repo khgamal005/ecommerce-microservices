@@ -9,10 +9,7 @@
     "allowSyntheticDefaultImports": true,
     "tsBuildInfoFile": "out-tsc/auth-service/tsconfig.app.tsbuildinfo"
   },
-  "files": [
-    "src/main.ts",
-    "src/swagger-output.json"
-  ],
+
   "include": [
     "src/**/*.ts", 
     "src/**/*.json",

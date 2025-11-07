@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../../node_modules/@prisma/client"
 }
 datasource db {
   provider = "mongodb"
@@ -12,7 +11,7 @@ model User {
   name       String?
   email      String?   @unique
   password   String?
-  avatar     images[]
+  avatar     images?
   followings String[]
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -22,6 +21,6 @@ model images {
   id      String   @id @default(auto()) @map("_id") @db.ObjectId
   file_id String
   url     String
-  userId  String?  @db.ObjectId
+userId  String?  @unique @db.ObjectId
   user    User?    @relation(fields: [userId], references: [id])
 }

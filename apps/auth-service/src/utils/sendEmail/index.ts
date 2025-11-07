@@ -20,10 +20,11 @@ const renderEmailTemplate = async (
 ): Promise<string> => {
   const templetePath = path.join(
     process.cwd(),
+    'apps',
     'auth-service',
     'src',
     'utils',
-    'emailTemplate',
+    'email-Templates',
     `${data.templete}.ejs`
   );
   return ejs.renderFile(templetePath, data);
