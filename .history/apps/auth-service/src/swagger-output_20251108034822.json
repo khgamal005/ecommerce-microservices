@@ -1,0 +1,179 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Auth Service API",
+    "version": "1.0.0",
+    "description": "API documentation for Auth Service"
+  },
+  "host": "localhost:6001",
+  "basePath": "/api",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/register-user": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "example": "khaled"
+                },
+                "email": {
+                  "example": "khgamal005@gmail.com"
+                },
+                "password": {
+                  "example": "password123"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/verify-user": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "example": "any"
+                },
+                "email": {
+                  "example": "khgamal005@gmail.com"
+                },
+                "password": {
+                  "example": "password123"
+                },
+                "otp": {
+                  "example": "1234"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/login-user": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "example": "khgamal005@gmail.com"
+                },
+                "password": {
+                  "example": "password123"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+
+    {
+  "/forget-password": {
+    "post": {
+      "description": "Send OTP for password reset",
+      "tags": ["Auth"],
+      "parameters": [
+        {
+          "name": "body",
+          "in": "body",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "example": "khgamal005@gmail.com"
+              }
+            }
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OTP sent to user's email"
+        },
+        "400": {
+          "description": "Validation error"
+        },
+        "404": {
+          "description": "User not found"
+        }
+      }
+    }
+  },
+  "/reset-password": {
+    "post": {
+      "description": "Reset user password using OTP",
+      "tags": ["Auth"],
+      "parameters": [
+        {
+          "name": "body",
+          "in": "body",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "example": "khgamal005@gmail.com"
+              },
+              "otp": {
+                "example": "1234"
+              },
+              "newPassword": {
+                "example": "newPassword123"
+              }
+            }
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Password reset successfully"
+        },
+        "400": {
+          "description": "Validation error / OTP invalid"
+        },
+        "404": {
+          "description": "User not found"
+        }
+      }
+    }
+  }
+}
+
+  }
+}

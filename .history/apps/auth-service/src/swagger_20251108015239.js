@@ -1,0 +1,103 @@
+const swaggerAutogen = require('swagger-autogen')();
+
+const doc = {
+  info: {
+    title: 'Auth Service API',
+    version: '1.0.0',
+    description: 'API documentation for Auth Service',
+  },
+  host: 'localhost:6001',
+  basePath: '/api',
+  schemes: ['http'],
+};
+
+const outputFile = './apps/auth-service/src/swagger-output.json';
+const endpointsFiles = ['./apps/auth-service/src/routes/auth.router.ts'];
+
+// Generate swagger-output.json
+swaggerAutogen(outputFile, endpointsFiles, doc).then(() => {
+  console.log('✅ Swagger documentation generated successfully!');
+});
+
+
+
+/{
+  "swagger": "2.0",
+  "info": {
+    "title": "Auth Service API",
+    "version": "1.0.0",
+    "description": "API documentation for Auth Service"
+  },
+  "host": "localhost:6001",
+  "basePath": "/api",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/register": {
+      "post": {
+        "description": "Register a new user",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "example": "khaled"
+                },
+                "email": {
+                  "example": "khgamal005@gmail.com"
+                },
+                "password": {
+                  "example": "password123"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OTP sent to user email"
+          }
+        }
+      }
+    },
+    "/verify": {
+      "post": {
+        "description": "Verify user using OTP",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "example": "khaled"
+                },
+                "email": {
+                  "example": "khgamal005@gmail.com"
+                },
+                "password": {
+                  "example": "password123"
+                },
+                "otp": {
+                  "example": "1234"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Account successfully verified"
+          }
+        }
+      }
+    }
+  }
+}
