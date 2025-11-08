@@ -18,3 +18,6 @@ const endpointsFiles = ['./apps/auth-service/src/routes/auth.router.ts'];
 swaggerAutogen(outputFile, endpointsFiles, doc).then(() => {
   console.log('✅ Swagger documentation generated successfully!');
 });
+
+
+
