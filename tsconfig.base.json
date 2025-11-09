@@ -1,11 +1,14 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
     "composite": true,
     "declarationMap": true,
-    "emitDeclarationOnly": true,
+    "emitDeclarationOnly": false,
     "importHelpers": true,
     "isolatedModules": true,
-        "baseUrl": ".",                // ✅ important for paths
+
+    "baseUrl": ".",
+    "rootDir": ".",
 
     "lib": ["es2022"],
     "module": "nodenext",
@@ -14,16 +17,16 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
+
     "customConditions": ["@my-app/source"],
 
     "paths": {
-
       "@packages/*": ["packages/*"]
     }
-  }
+  },
+  "exclude": ["node_modules", "tmp"]
 }
-

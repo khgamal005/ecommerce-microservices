@@ -108,12 +108,7 @@ export const verifyOtp = async (
   if (savedOtp !== otp) {
     if (otpFailedAttempts >= 3) {
       await redis.set(`otp_lock:${email}`, 'locked', 'EX', 1800);
-      await redis.set(
-        failedAttemptsKey,
-        otpFailedAttempts.toString(),
-        'EX',
-        1800
-      );
+      
       await redis.del(`otp:${email}`);
 
       throw new ValidationError(
