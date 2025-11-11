@@ -9,12 +9,11 @@ export enum Languages {
 }
 
 export enum Routes {
-  ROOT = "/",
-  MENU = "menu",
-  ABOUT = "aboutUs",
-  CONTACT = "contact",
-  ourcategory = "ourcategory",
-  FAQs = "FAQs",
+  Home = "home",
+  Products = "Products",
+  Shops = "shops",
+  Offers = "offers",
+  BecomeSeller = "become-Seller",
 
 }
 

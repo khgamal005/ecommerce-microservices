@@ -74,22 +74,7 @@ router.post('/login-user', loginUser);
 router.post('/forget-password', userForgetPassword);
 
 
-/*
-#swagger.tags = ['Auth']
-#swagger.description = 'Reset user password using OTP'
-#swagger.parameters['body'] = {
-    in: 'body',
-    required: true,
-    schema: {
-      $email: "khgamal005@gmail.com",
-      $newPassword: "newPassword123"
-    }
-}
-#swagger.responses[200] = {
-  description: "Password reset successfully"
-}
-*/
-router.post('/reset-password', resetUserPassword);
+
 
 
 /*  
@@ -114,6 +99,24 @@ router.post('/reset-password', resetUserPassword);
 }
 */
 router.post('/verify-forget-password', verifyUserForgetPassword);
+
+
+/*
+#swagger.tags = ['Auth']
+#swagger.description = 'Reset user password using OTP'
+#swagger.parameters['body'] = {
+    in: 'body',
+    required: true,
+    schema: {
+      $email: "khgamal005@gmail.com",
+      $newPassword: "newPassword123"
+    }
+}
+#swagger.responses[200] = {
+  description: "Password reset successfully"
+}
+*/
+router.post('/reset-password', resetUserPassword);
 
 
 export default router;

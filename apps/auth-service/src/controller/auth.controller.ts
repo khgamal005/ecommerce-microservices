@@ -16,7 +16,7 @@ import { setAuthCookies } from '../utils/cookies/setCookie';
 
 /**
  * Register a new user
- * @route POST /api/auth/register
+ * @route POST /api/register-user
  */
 export const userRegistration = async (
   req: Request,
@@ -55,6 +55,7 @@ export const userRegistration = async (
     next(error);
   }
 };
+ // * @route POST /api/verify-user
 
 export const verifyUserRegistration = async (
   req: Request,
@@ -101,6 +102,9 @@ export const verifyUserRegistration = async (
     return next(error);
   }
 };
+
+ // * @route POST /api/verify-user
+
 
 export const loginUser = async (
   req: Request,

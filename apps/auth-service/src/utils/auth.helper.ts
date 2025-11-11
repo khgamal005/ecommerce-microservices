@@ -4,28 +4,19 @@ import redis from '@packages/libs/prisma/redis';
 import { sendEmail } from './sendEmail';
 import prisma from '@packages/libs/prisma';
 import { NextFunction, Request, Response } from 'express';
-
 export const validationRegistrationUser = (
   data: any,
   userType: 'user' | 'seller'
 ): true => {
-  // Use 'name' instead of 'username' to match your request body
   const { email, password, name, phone_number, country } = data;
 
-  // 1️⃣ Check required fields - use 'name' instead of 'username'
+  // 1️⃣ Required fields
   if (
     !email ||
     !password ||
-    !name || // Changed from username to name
+    !name ||
     (userType === 'seller' && (!phone_number || !country))
   ) {
-    console.log('❌ Field status:', {
-      hasEmail: !!email,
-      hasPassword: !!password,
-      hasName: !!name,
-      hasPhone: !!phone_number,
-      hasCountry: !!country,
-    });
     throw new ValidationError('Missing required fields for registration');
   }
 
@@ -35,9 +26,21 @@ export const validationRegistrationUser = (
     throw new ValidationError('Invalid email format');
   }
 
+  // 3️⃣ ✅ Password length constraints (4–16 characters)
+  if (password.length < 4 || password.length > 16) {
+    throw new ValidationError('Password must be between 4 and 16 characters');
+  }
+
+  // 4️⃣ ✅ Password pattern: only letters + numbers
+  const passwordRegex = /^[A-Za-z0-9]+$/;
+  if (!passwordRegex.test(password)) {
+    throw new ValidationError('Password must contain only letters or numbers');
+  }
+
   console.log('✅ Validation passed');
   return true;
 };
+
 
 // ... rest of your functions remain the same
 export const checkOtpRegistration = async (
@@ -158,6 +161,8 @@ export const handleForgetPassword = async (
     next(error);
   }
 };
+
+
 export const verifyForgetPasswordOtp = async (
   req: Request,
   res: Response,

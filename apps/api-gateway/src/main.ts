@@ -39,24 +39,25 @@ app.get('/gateway-health', (req, res) => {
 
 // ✅ Proxy all /api requests to auth-service (without duplicating /api)
 // In your api-gateway main.ts
-app.use(
-  '/api',
-  proxy(`http://localhost:${process.env.PORT || 6001}`, {
-    parseReqBody: true,
-    proxyReqPathResolver: (req) => {
-      console.log(`[GATEWAY] Proxying: ${req.method} ${req.url} -> http://localhost:6001${req.url}`);
-      return req.url; // This removes the /api prefix when forwarding
-    },
-    proxyReqOptDecorator: (opts, srcReq) => {
-      console.log(`[GATEWAY] Headers:`, srcReq.headers);
-      return opts;
-    },
-    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
-      console.log(`[GATEWAY] Response from auth service: ${proxyRes.statusCode}`);
-      return proxyResData;
-    }
-  })
-);
+// app.use(
+//   '/api',
+//   proxy(`http://localhost:${process.env.PORT || 6001}`, {
+//     parseReqBody: true,
+//     proxyReqPathResolver: (req) => {
+//       console.log(`[GATEWAY] Proxying: ${req.method} ${req.url} -> http://localhost:6001${req.url}`);
+//       return req.url; // This removes the /api prefix when forwarding
+//     },
+//     proxyReqOptDecorator: (opts, srcReq) => {
+//       console.log(`[GATEWAY] Headers:`, srcReq.headers);
+//       return opts;
+//     },
+//     userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+//       console.log(`[GATEWAY] Response from auth service: ${proxyRes.statusCode}`);
+//       return proxyResData;
+//     }
+//   })
+// );
+app.use('/',proxy('http://localhost:6001'))
 
 // Start server
 const host = process.env.HOST ?? 'localhost';
