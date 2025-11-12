@@ -201,7 +201,42 @@
           }
         }
       }
+    },"/resend-otp": {
+  "post": {
+    "description": "Resend OTP to user email for account activation",
+    "tags": ["Auth"],
+    "parameters": [
+      {
+        "name": "body",
+        "in": "body",
+        "required": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "example": "khgamal005@gmail.com"
+            },
+            "name": {
+              "example": "Khaled"
+            }
+          }
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OTP re-sent successfully"
+      },
+      "400": {
+        "description": "Validation error or rate limit reached"
+      },
+      "404": {
+        "description": "User not found"
+      }
     }
+  }
+}
+
 
   }
 }

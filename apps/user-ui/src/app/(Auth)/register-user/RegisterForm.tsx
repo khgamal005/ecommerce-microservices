@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import GoogleSignInButton from '../../shared/components/google-button/GoogleSignInButton';
 import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 
 type RegisterFormInputs = {
   name: string;
@@ -31,6 +32,8 @@ const RegisterForm = () => {
   const [showOtp, setShowOtp] = useState(false);
   const [userData, setUserData] = useState<RegisterFormInputs | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const inputsRefs = useRef<(HTMLInputElement | null)[]>([]);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -43,9 +46,23 @@ const RegisterForm = () => {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    if (value && index < 3) {
+    if (value && index < otp.length - 1) {
       inputsRefs.current[index + 1]?.focus();
     }
+  };
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault(); // stop default paste behavior
+
+    const pasted = e.clipboardData.getData('text').trim();
+    const digits = pasted.replace(/\D/g, ''); // remove anything not 0–9
+
+    if (digits.length !== otp.length) return;
+
+    const newOtp = digits.split(''); // ['4','9','3','1']
+    setOtp(newOtp);
+
+    // focus last input
+    inputsRefs.current[otp.length - 1]?.focus();
   };
 
   const handleOtpKeyDown = (
@@ -114,6 +131,8 @@ const RegisterForm = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: userData?.email,
+          name: userData?.name,
+          password: userData?.password,
           otp: otpCode,
         }),
       });
@@ -123,7 +142,13 @@ const RegisterForm = () => {
       return json;
     },
 
-    onSuccess: () => setMessage('✅ Account verified successfully'),
+    onSuccess: () => {
+      setMessage('✅ Account verified successfully');
+
+      timeoutRef.current = setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+    },
 
     onError: (err: any) => setServerError(err.message),
   });
@@ -148,6 +173,12 @@ const RegisterForm = () => {
 
     onError: () => setServerError('Failed to resend OTP'),
   });
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 py-8">
@@ -288,7 +319,8 @@ const RegisterForm = () => {
                 value={digit}
                 onChange={(e) => handleOtpChange(index, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                ref={(el) => {
+                onPaste={handleOtpPaste}
+                ref={(el: HTMLInputElement | null) => {
                   inputsRefs.current[index] = el;
                 }}
                 className="w-12 h-12 text-center border rounded-lg text-lg"

@@ -11,7 +11,7 @@ import {
 import prisma from '@packages/libs/prisma';
 import { AuthError, ValidationError } from '@packages/error-handler';
 import bcrypt from 'node_modules/bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { JsonWebTokenError } from 'jsonwebtoken';
 import { setAuthCookies } from '../utils/cookies/setCookie';
 
 /**
@@ -217,5 +217,93 @@ export const resetUserPassword = async (
   } catch (error) {
     console.log('❌ Error in resetUserPassword:', error);
     next(error);
+  }
+};
+
+export const resendRegistrationOtp = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { name, email } = req.body;
+
+    if (!email) {
+      throw new ValidationError('Email is required to resend OTP');
+    }
+
+    let userName = name;
+    if (!userName) {
+      const user = await prisma.user.findUnique({ where: { email } });
+      userName = user?.name || 'User';
+    }
+
+    await checkOtpRegistration(email, next);
+    await trackotpRequests(email, next);
+
+    await sendotp(userName, email, 'user-activation-mail');
+
+    return res.status(200).json({
+      message: 'OTP re-sent successfully. Please check your email.',
+    });
+
+  } catch (error) {
+    console.log('❌ Error in resendRegistrationOtp:', error);
+    return next(error); // ✅ FIXED
+  }
+};
+
+
+
+
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const token = req.cookies.refreshToken;
+
+    if (!token) {
+      return next(new ValidationError('Unauthorized: no refresh token'));
+    }
+
+    // Verify refresh token
+    let decoded: { id: string; role: string };
+    try {
+      decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!) as {
+        id: string;
+        role: string;
+      };
+    } catch (err) {
+      return next(new JsonWebTokenError('Forbidden: invalid refresh token'));
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (!user) {
+      return next(new AuthError('User not found'));
+    }
+
+    // Generate new tokens with consistent payload
+    const accessToken = jwt.sign(
+      { id: user.id, role: decoded.role },
+      process.env.JWT_SECRET!,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user.id, role: decoded.role }, // include role for consistency
+      process.env.REFRESH_TOKEN_SECRET!,
+      { expiresIn: '7d' }
+    );
+
+    // Set cookies
+    setAuthCookies(res, { accessToken, refreshToken });
+
+    return res.status(200).json({ message: 'Tokens refreshed successfully' });
+  } catch (err) {
+    console.error('❌ Error in refreshToken:', err);
+    next(err);
   }
 };

@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginUser, resetUserPassword, userForgetPassword, userRegistration, verifyUserForgetPassword, verifyUserRegistration } from '../controller/auth.controller';
+import { loginUser, resendRegistrationOtp, resetUserPassword, userForgetPassword, userRegistration, verifyUserForgetPassword, verifyUserRegistration } from '../controller/auth.controller';
 
 const router = express.Router();
 
@@ -117,6 +117,24 @@ router.post('/verify-forget-password', verifyUserForgetPassword);
 }
 */
 router.post('/reset-password', resetUserPassword);
+
+/* 
+#swagger.tags = ['Auth']
+#swagger.description = 'Resend OTP to user's email'
+#swagger.parameters['body'] = {
+  in: 'body',
+  required: true,
+  schema: {
+    $email: "khgamal005@gmail.com",
+    name: "Khaled"
+  }
+}
+#swagger.responses[200] = {
+  description: "OTP re-sent successfully"
+}
+*/
+router.post('/resend-otp', resendRegistrationOtp);
+
 
 
 export default router;

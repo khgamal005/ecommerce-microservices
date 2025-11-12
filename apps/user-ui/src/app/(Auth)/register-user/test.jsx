@@ -258,3 +258,23 @@ export default function RegisterForm () {
     </div>
   );
 }
+
+
+
+    // Use your custom toast with dynamic color
+      toast({
+        title:
+          json.message || (res.ok ? 'Logged in successfully' : 'Login failed'),
+        className: res.ok ? 'text-green-500' : 'text-red-500',
+      });
+
+      if (res.ok) {
+        router.push('/'); // navigate to home/dashboard
+      }
+    } catch (error) {
+      toast({
+        title: 'Server error. Try again later.',
+        className: 'text-red-500',
+      });
+    }
+  };
