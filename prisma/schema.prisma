@@ -6,16 +6,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 model User {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  name       String?
-  email      String?   @unique
-  password   String?
-  avatar     images?
-  followings String[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String?
+  email       String?   @unique
+  password    String?
+  role        UserRole  @default(user)
+  avatar      images?
+  followings  String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
+
 
 model images {
   id      String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -23,4 +26,9 @@ model images {
   url     String
 userId  String?  @unique @db.ObjectId
   user    User?    @relation(fields: [userId], references: [id])
+}
+enum UserRole {
+  user
+  seller
+  admin
 }

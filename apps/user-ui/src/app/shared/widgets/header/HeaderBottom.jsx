@@ -1,11 +1,14 @@
 import { Routes } from 'apps/user-ui/src/constants/enums';
+import useUser from 'apps/user-ui/src/hooks/use-user';
 import { AlignLeft, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 
 const HeaderBottom = () => {
   const [show, setShow] = useState(false);
   const [sticky, setSticky] = useState(false);
+  const{user} =useUser();
+  console.log(user);
 
   useEffect(() => {
     const handleScroll = () => {

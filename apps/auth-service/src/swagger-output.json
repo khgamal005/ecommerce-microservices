@@ -19,24 +19,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "name": {
-                  "example": "khaled"
-                },
-                "email": {
-                  "example": "khgamal005@gmail.com"
-                },
-                "password": {
-                  "example": "password123"
-                }
+                "name": { "example": "khaled" },
+                "email": { "example": "khgamal005@gmail.com" },
+                "password": { "example": "password123" }
               }
             }
           }
         ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        }
+        "responses": { "201": { "description": "Created" } }
       }
     },
     "/verify-user": {
@@ -49,27 +39,15 @@
             "schema": {
               "type": "object",
               "properties": {
-                "name": {
-                  "example": "any"
-                },
-                "email": {
-                  "example": "khgamal005@gmail.com"
-                },
-                "password": {
-                  "example": "password123"
-                },
-                "otp": {
-                  "example": "1234"
-                }
+                "name": { "example": "any" },
+                "email": { "example": "khgamal005@gmail.com" },
+                "password": { "example": "password123" },
+                "otp": { "example": "1234" }
               }
             }
           }
         ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        }
+        "responses": { "201": { "description": "Created" } }
       }
     },
     "/login-user": {
@@ -82,21 +60,13 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": {
-                  "example": "khgamal005@gmail.com"
-                },
-                "password": {
-                  "example": "password123"
-                }
+                "email": { "example": "khgamal005@gmail.com" },
+                "password": { "example": "password123" }
               }
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
+        "responses": { "200": { "description": "OK" } }
       }
     },
     "/forget-password": {
@@ -110,28 +80,18 @@
             "required": true,
             "schema": {
               "type": "object",
-              "properties": {
-                "email": {
-                  "example": "khgamal005@gmail.com"
-                }
-              }
+              "properties": { "email": { "example": "khgamal005@gmail.com" } }
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "OTP sent to user's email"
-          },
-          "400": {
-            "description": "Validation error"
-          },
-          "404": {
-            "description": "User not found"
-          }
+          "200": { "description": "OTP sent to user's email" },
+          "400": { "description": "Validation error" },
+          "404": { "description": "User not found" }
         }
       }
     },
-        "/verify-forget-password": {
+    "/verify-forget-password": {
       "post": {
         "description": "Verify OTP sent for password reset",
         "tags": ["Auth"],
@@ -143,26 +103,16 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": {
-                  "example": "khgamal005@gmail.com"
-                },
-                "otp": {
-                  "example": "1234"
-                }
+                "email": { "example": "khgamal005@gmail.com" },
+                "otp": { "example": "1234" }
               }
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "OTP verified successfully, user can reset password"
-          },
-          "400": {
-            "description": "Validation error / OTP invalid"
-          },
-          "404": {
-            "description": "User not found"
-          }
+          "200": { "description": "OTP verified successfully, user can reset password" },
+          "400": { "description": "Validation error / OTP invalid" },
+          "404": { "description": "User not found" }
         }
       }
     },
@@ -178,65 +128,120 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": {
-                  "example": "khgamal005@gmail.com"
-                },
-                
-                "newPassword": {
-                  "example": "newPassword123"
-                }
+                "email": { "example": "khgamal005@gmail.com" },
+                "newPassword": { "example": "newPassword123" }
               }
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "Password reset successfully"
-          },
-          "400": {
-            "description": "Validation error / OTP invalid"
-          },
-          "404": {
-            "description": "User not found"
-          }
+          "200": { "description": "Password reset successfully" },
+          "400": { "description": "Validation error / OTP invalid" },
+          "404": { "description": "User not found" }
         }
       }
-    },"/resend-otp": {
-  "post": {
-    "description": "Resend OTP to user email for account activation",
-    "tags": ["Auth"],
-    "parameters": [
-      {
-        "name": "body",
-        "in": "body",
-        "required": true,
-        "schema": {
-          "type": "object",
-          "properties": {
-            "email": {
-              "example": "khgamal005@gmail.com"
-            },
-            "name": {
-              "example": "Khaled"
+    },
+    "/resend-otp": {
+      "post": {
+        "description": "Resend OTP to user email for account activation",
+        "tags": ["Auth"],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": { "example": "khgamal005@gmail.com" },
+                "name": { "example": "Khaled" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OTP re-sent successfully" },
+          "400": { "description": "Validation error or rate limit reached" },
+          "404": { "description": "User not found" }
+        }
+      }
+    },
+    "/logged-in-user": {
+      "get": {
+        "description": "Get the currently logged-in user's profile using JWT from cookie or Authorization header",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Successfully fetched the logged-in user's profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": {
+                      "type": "string",
+                      "example": "User profile fetched successfully"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "654f13c29a71a8d74b57d8e2" },
+                        "name": { "type": "string", "example": "Khaled Gamal" },
+                        "email": { "type": "string", "example": "khgamal005@gmail.com" },
+                        "role": { "type": "string", "enum": ["user", "seller", "admin"], "example": "user" },
+                        "createdAt": { "type": "string", "format": "date-time", "example": "2025-11-13T00:00:00.000Z" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "message": { "type": "string", "example": "Unauthorized: No token provided" } } }
+              }
             }
           }
         }
       }
-    ],
-    "responses": {
-      "200": {
-        "description": "OTP re-sent successfully"
-      },
-      "400": {
-        "description": "Validation error or rate limit reached"
-      },
-      "404": {
-        "description": "User not found"
+    },
+    "/refresh-token": {
+      "post": {
+        "description": "Refresh access and refresh tokens using the refreshToken cookie",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Tokens refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "message": { "type": "string", "example": "Tokens refreshed successfully" } } }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — No refresh token provided or missing",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "message": { "type": "string", "example": "Unauthorized: no refresh token" } } }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Invalid refresh token",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "message": { "type": "string", "example": "Forbidden: invalid refresh token" } } }
+              }
+            }
+          }
+        }
       }
     }
-  }
-}
-
-
   }
 }

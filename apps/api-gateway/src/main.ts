@@ -17,11 +17,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(
   cors({
-    origin: 'http://localhost:3000', // must match frontend
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
+    origin: 'http://localhost:3000', // frontend URL
+    credentials: true, // This is crucial for cookies
   })
 );
+
+// Handle preflight requests
+app.options('*', cors());
 app.use(morgan('dev'));
 
 const limiter = rateLimit({

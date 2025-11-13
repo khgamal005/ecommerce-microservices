@@ -34,6 +34,8 @@ const RegisterForm = () => {
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
 
   const inputsRefs = useRef<(HTMLInputElement | null)[]>([]);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -76,19 +78,32 @@ const RegisterForm = () => {
 
   // ✅ Timer logic
   const startTimer = () => {
+    // If an old interval exists, clear it first
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
     setCanResend(false);
     setTimer(60);
 
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setTimer((t) => {
         if (t <= 1) {
-          clearInterval(interval);
+          if (intervalRef.current) clearInterval(intervalRef.current);
           setCanResend(true);
+          return 0;
         }
         return t - 1;
       });
     }, 1000);
   };
+
+  // 🧹 Cleanup on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   // ✅ React Query — Register Mutation
   const registerMutation = useMutation({

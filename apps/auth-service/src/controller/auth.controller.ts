@@ -12,7 +12,7 @@ import prisma from '@packages/libs/prisma';
 import { AuthError, ValidationError } from '@packages/error-handler';
 import bcrypt from 'node_modules/bcryptjs';
 import jwt, { JsonWebTokenError } from 'jsonwebtoken';
-import { setAuthCookies } from '../utils/cookies/setCookie';
+import { clearAuthCookies, setAuthCookies } from '../utils/cookies/setCookie';
 
 /**
  * Register a new user
@@ -130,7 +130,7 @@ export const loginUser = async (
     }
 
     // ✅ Generate tokens
-    const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, {
+    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET!, {
       expiresIn: '1h',
     });
 
@@ -288,7 +288,7 @@ export const refreshToken = async (
     // Generate new tokens with consistent payload
     const accessToken = jwt.sign(
       { id: user.id, role: decoded.role },
-      process.env.JWT_SECRET!,
+      process.env.ACCESS_TOKEN_SECRET!,
       { expiresIn: '15m' }
     );
 
@@ -307,3 +307,38 @@ export const refreshToken = async (
     next(err);
   }
 };
+
+
+export const getUser = (req: any, res: Response, next: NextFunction) => {
+  try {
+    const user =req.user// ✅ get current user
+    res.json({
+      message: "User profile fetched successfully",
+      success: true,
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//  * @route POST /api/logout
+
+ 
+export const logoutUser = (req: Request, res: Response) => {
+  try {
+    // Clear the authentication cookies
+    clearAuthCookies(res);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error during logout'
+    });
+  }
+}
