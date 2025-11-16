@@ -1,10 +1,10 @@
 import prisma from "@packages/libs/prisma";
-import { User } from "@prisma/client";
+import { users } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 interface AuthRequest extends Request {
-  user?: User;
+  user?: users;
 }
 
 
@@ -32,7 +32,7 @@ export const isAuthenticated = async(
       res.status(401).json({ message: "Unauthorized: Invalid token payload" });
       return;
     }
-    const account =await prisma.user.findUnique({
+    const account =await prisma.users.findUnique({
       where: { id: decoded.id },
     });
     if (!account) {

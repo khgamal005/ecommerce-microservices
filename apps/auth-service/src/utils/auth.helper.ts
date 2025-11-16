@@ -4,7 +4,9 @@ import redis from '@packages/libs/prisma/redis';
 import { sendEmail } from './sendEmail';
 import prisma from '@packages/libs/prisma';
 import { NextFunction, Request, Response } from 'express';
-export const validationRegistrationUser = (
+
+
+export const validationRegistrationData = (
   data: any,
   userType: 'user' | 'seller'
 ): true => {
@@ -143,8 +145,9 @@ export const handleForgetPassword = async (
     }
 
     const user =
-      userType === 'user' &&
-      (await prisma.user.findUnique({ where: { email } }));
+      userType === 'user' ?
+      (await prisma.users.findUnique({ where: { email } })) :
+      (await prisma.sellers.findUnique({ where: { email } }));
     if (!user) {
       throw new ValidationError('User not found');
     }
@@ -153,7 +156,7 @@ export const handleForgetPassword = async (
     await sendotp(
       user.name ?? 'User', // fallback if name is null
       email,
-      'forget-password-user-mail'
+      userType === 'user'? 'forget-password-user-mail' : 'forget-password-seller-mail'
     );
 
     res.status(200).json('otp sent to your email verify your account');

@@ -1,32 +1,102 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
-
-model User {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+//
+// -------------------- USER ---------------------
+//
+model users {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
   name        String?
-  email       String?   @unique
+  email       String?      @unique
   password    String?
-  role        UserRole  @default(user)
-  avatar      images?
+  avatar      Images?
+  avatarId    String?      @unique @db.ObjectId
   followings  String[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  shopReviews shopReviews[]
 }
 
-
-model images {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+//
+// -------------------- IMAGE ---------------------
+//
+model Images {
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
   file_id String
   url     String
-userId  String?  @unique @db.ObjectId
-  user    User?    @relation(fields: [userId], references: [id])
+  userId  String? @unique @db.ObjectId
+  shopId  String? @unique @db.ObjectId
+
+  user  users? @relation(fields: [userId], references: [id])
+  shops Shops? @relation(fields: [shopId], references: [id])
 }
+
+//
+// -------------------- SELLER ---------------------
+//
+model sellers {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String? @unique
+  storeName    String?
+  password     String
+  country      String
+  phone_number String
+  stripeId     String?
+
+  shop   Shops? 
+  shopId String? @unique @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//
+// -------------------- SHOP ---------------------
+//
+model Shops {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  bio           String?
+  category      String
+  avatar        Images?
+  coverBanner   String?
+  address       String?
+  opining_hours String?
+  webSite       String?
+  socialLinks   Json[]
+  ratings       Float         @default(0)
+  reviews       shopReviews[]
+  sellerId      String        @unique @db.ObjectId
+  seller        sellers       @relation(fields: [sellerId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model shopReviews {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId String? @unique @db.ObjectId
+  user   users?  @relation(fields: [userId], references: [id])
+
+  ratings Float
+  reviews String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  shopId    String?  @unique @db.ObjectId
+
+  shops Shops? @relation(fields: [shopId], references: [id])
+}
+
+//
+// -------------------- ENUM ---------------------
+//
 enum UserRole {
   user
   seller

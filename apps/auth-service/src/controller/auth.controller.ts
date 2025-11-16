@@ -4,7 +4,7 @@ import {
   handleForgetPassword,
   sendotp,
   trackotpRequests,
-  validationRegistrationUser,
+  validationRegistrationData,
   verifyForgetPasswordOtp,
   verifyOtp,
 } from '../utils/auth.helper';
@@ -25,7 +25,7 @@ export const userRegistration = async (
 ) => {
   try {
     // Validate request body first
-    validationRegistrationUser(req.body, 'user');
+    validationRegistrationData(req.body, 'user');
 
     // THEN destructure - this was the syntax error!
     const { name, email, password } = req.body;
@@ -36,7 +36,7 @@ export const userRegistration = async (
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.users.findUnique({ where: { email } });
     if (existingUser) {
       return next(new ValidationError('User with this email already exists.'));
     }
@@ -55,7 +55,7 @@ export const userRegistration = async (
     next(error);
   }
 };
- // * @route POST /api/verify-user
+// * @route POST /api/verify-user
 
 export const verifyUserRegistration = async (
   req: Request,
@@ -69,7 +69,7 @@ export const verifyUserRegistration = async (
     if (!name || !email || !password || !otp) {
       throw new ValidationError('Missing required fields for verification');
     }
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.users.findUnique({ where: { email } });
     if (existingUser) {
       return next(new ValidationError('User with this email already exists.'));
     }
@@ -79,7 +79,7 @@ export const verifyUserRegistration = async (
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ✅ 4. Create user in MongoDB
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         name,
         email,
@@ -103,8 +103,7 @@ export const verifyUserRegistration = async (
   }
 };
 
- // * @route POST /api/verify-user
-
+// * @route POST /api/verify-user
 
 export const loginUser = async (
   req: Request,
@@ -118,7 +117,7 @@ export const loginUser = async (
       return next(new ValidationError('Email and password are required'));
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.users.findUnique({ where: { email } });
 
     if (!user) {
       return next(new AuthError('Invalid email or password'));
@@ -130,9 +129,13 @@ export const loginUser = async (
     }
 
     // ✅ Generate tokens
-    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET!, {
-      expiresIn: '1h',
-    });
+    const accessToken = jwt.sign(
+      { id: user.id },
+      process.env.ACCESS_TOKEN_SECRET!,
+      {
+        expiresIn: '1h',
+      }
+    );
 
     const refreshToken = jwt.sign(
       { id: user.id },
@@ -187,7 +190,7 @@ export const resetUserPassword = async (
       throw new ValidationError('Email and new password are required');
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.users.findUnique({ where: { email } });
     if (!user) {
       return next(new ValidationError('User not found'));
     }
@@ -205,7 +208,7 @@ export const resetUserPassword = async (
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await prisma.user.update({
+    await prisma.users.update({
       where: { email },
       data: { password: hashedPassword },
     });
@@ -234,7 +237,7 @@ export const resendRegistrationOtp = async (
 
     let userName = name;
     if (!userName) {
-      const user = await prisma.user.findUnique({ where: { email } });
+      const user = await prisma.users.findUnique({ where: { email } });
       userName = user?.name || 'User';
     }
 
@@ -246,15 +249,11 @@ export const resendRegistrationOtp = async (
     return res.status(200).json({
       message: 'OTP re-sent successfully. Please check your email.',
     });
-
   } catch (error) {
     console.log('❌ Error in resendRegistrationOtp:', error);
     return next(error); // ✅ FIXED
   }
 };
-
-
-
 
 export const refreshToken = async (
   req: Request,
@@ -280,7 +279,7 @@ export const refreshToken = async (
     }
 
     // Check if user exists
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    const user = await prisma.users.findUnique({ where: { id: decoded.id } });
     if (!user) {
       return next(new AuthError('User not found'));
     }
@@ -308,12 +307,11 @@ export const refreshToken = async (
   }
 };
 
-
 export const getUser = (req: any, res: Response, next: NextFunction) => {
   try {
-    const user =req.user// ✅ get current user
+    const user = req.user; // ✅ get current user
     res.json({
-      message: "User profile fetched successfully",
+      message: 'User profile fetched successfully',
       success: true,
       user,
     });
@@ -324,21 +322,184 @@ export const getUser = (req: any, res: Response, next: NextFunction) => {
 
 //  * @route POST /api/logout
 
- 
 export const logoutUser = (req: Request, res: Response) => {
   try {
     // Clear the authentication cookies
     clearAuthCookies(res);
-    
+
     res.status(200).json({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Logged out successfully',
     });
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error during logout'
+      message: 'Internal server error during logout',
     });
   }
-}
+};
+
+//  * @route POST /api/register-seller
+export const sellerRegistration = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Validate request body first
+    validationRegistrationData(req.body, 'seller');
+
+    // THEN destructure - this was the syntax error!
+    const { name, email, password } = req.body;
+
+    // Double check required fields
+    if (!name || !email || !password) {
+      throw new ValidationError('Missing required fields for registration');
+    }
+
+    // Check if user already exists
+    const existingSeller = await prisma.sellers.findUnique({
+      where: { email },
+    });
+    if (existingSeller) {
+      return next(
+        new ValidationError('seller with this email already exists.')
+      );
+    }
+
+    // Check OTP and send new one
+    await checkOtpRegistration(email, next);
+    await trackotpRequests(email, next);
+    await sendotp(name, email, 'seller-activation-mail');
+
+    // Respond with success
+    return res.status(201).json({
+      message: 'OTP sent to your email, please check your inbox.',
+    });
+  } catch (error) {
+    console.log('❌ Error in sellerRegistration:', error);
+    next(error);
+  }
+};
+
+// * @route POST /api/verify-seller
+
+export const verifySellerRegistration = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { name, email, password, otp, phone_number, country } = req.body;
+
+    // ✅ Validate required fields
+    if (!name || !email || !password || !otp || !phone_number! || !country) {
+      throw new ValidationError('Missing required fields for verification');
+    }
+    const existingSeller = await prisma.sellers.findUnique({
+      where: { email },
+    });
+    if (existingSeller) {
+      return next(
+        new ValidationError('seller with this email already exists.')
+      );
+    }
+    await verifyOtp(email, otp, next);
+
+    // ✅ 3. Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // ✅ 4. Create user in MongoDB
+    const seller = await prisma.sellers.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        phone_number,
+        country,
+      },
+    });
+
+    // ✅ 6. Send response
+    return res.status(201).json({
+      status: 'success',
+      message: 'Account verified successfully',
+      seller: {
+        id: seller.id,
+        name: seller.name,
+        email: seller.email,
+      },
+    });
+  } catch (error) {
+    console.log('❌ Error in verifyUserRegistration:', error);
+    return next(error);
+  }
+};
+
+//  * @route POST /api/create-shop
+export const createShop = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const {
+      name,
+      bio,
+      category,
+      address,
+      opining_hours,
+      webSite,
+      socialLinks,
+      sellerId,
+    } = req.body;
+
+    if (
+      !sellerId ||
+      !name ||
+      !category ||
+      !address ||
+      !opining_hours ||
+      !socialLinks
+    ) {
+      throw new ValidationError('all fields are required');
+    }
+
+    const shopData: any = {
+      name,
+      bio,
+      category,
+      address,
+      opining_hours,
+      sellerId,
+    };
+    if (webSite && webSite.trim() !== '') {
+      shopData.webSite = webSite;
+    }
+
+    // Check if seller already has a shop
+    const existingShop = await prisma.shops.findUnique({
+      where: { sellerId },
+    });
+
+    if (existingShop) {
+      throw new ValidationError('You already created a shop');
+    }
+
+    // OPTIONAL avatar (file upload)
+
+    // Create shop
+    const shop = await prisma.shops.create({
+      data: shopData,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Shop created successfully',
+      shop,
+    });
+  } catch (err) {
+    next(err);
+  }
+};

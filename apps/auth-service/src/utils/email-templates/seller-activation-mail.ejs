@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activate Your Seller Account</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background-color: #f5f5f5;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .header {
+        background-color: #16a34a;
+        color: white;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: 1px;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .content h2 {
+        color: #16a34a;
+        font-size: 20px;
+        margin-bottom: 15px;
+      }
+
+      .content p {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+      }
+
+      .otp-box {
+        background-color: #ecfdf5;
+        border: 1px solid #bbf7d0;
+        padding: 15px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: #065f46;
+        border-radius: 6px;
+        letter-spacing: 3px;
+      }
+
+      .footer {
+        text-align: center;
+        padding: 15px;
+        background-color: #f9fafb;
+        font-size: 14px;
+        color: #6b7280;
+      }
+
+      .footer a {
+        color: #16a34a;
+        text-decoration: none;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Easy Shop – Seller</h1>
+      </div>
+
+      <div class="content">
+        <h2>Hello <%= name %>,</h2>
+
+        <p>Welcome to the <strong>EasyShop Seller Center</strong>!  
+        Thank you for choosing to join our marketplace.</p>
+
+        <p>To activate your seller account, please use the OTP code below:</p>
+
+        <div class="otp-box">
+          <%= otp %>
+        </div>
+
+        <p>The OTP is valid for <strong>5 minutes</strong>.  
+        If you did not initiate this process, please ignore this email.</p>
+
+        <p>We look forward to seeing your shop grow on EasyShop!</p>
+      </div>
+
+      <div class="footer">
+        © <%= new Date().getFullYear() %> EasyShop Marketplace.  
+        Need help? <a href="#">Contact Support</a>
+      </div>
+    </div>
+  </body>
+</html>

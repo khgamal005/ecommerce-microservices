@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUser, loginUser, logoutUser, refreshToken, resendRegistrationOtp, resetUserPassword, userForgetPassword, userRegistration, verifyUserForgetPassword, verifyUserRegistration } from '../controller/auth.controller';
+import { createShop, getUser, loginUser, logoutUser, refreshToken, resendRegistrationOtp, resetUserPassword, sellerRegistration, userForgetPassword, userRegistration, verifySellerRegistration, verifyUserForgetPassword, verifyUserRegistration } from '../controller/auth.controller';
 import { isAuthenticated } from '@packages/middelware/isAuthenticated';
 
 const router = express.Router();
@@ -188,6 +188,14 @@ router.get('/logged-in-user', isAuthenticated,getUser);
 */
 router.post("/refresh-token", refreshToken);
 router.post("/logout", logoutUser);
+
+
+
+router.post("/register-seller",sellerRegistration);
+
+router.post("/verify-seller", verifySellerRegistration);
+
+router.post("/create-shop", createShop);
 
 
 
