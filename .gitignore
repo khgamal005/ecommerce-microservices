@@ -54,3 +54,6 @@ out
 .history/
 .history/
 .env
+apps/user-ui/.env
+apps/user-ui/.env
+apps/user-ui/.env
