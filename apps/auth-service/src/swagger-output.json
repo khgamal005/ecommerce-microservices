@@ -335,6 +335,122 @@
           "409": { "description": "Seller already has a shop" }
         }
       }
+    },"/create-stripe-connect-account": {
+      "post": {
+        "tags": ["Stripe"],
+        "summary": "Create Stripe Connect onboarding link",
+        "description": "Creates a Stripe Express Connect account for a seller and returns an onboarding link.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sellerId": {
+                  "type": "string",
+                  "example": "675cb2e65b1234567890abcd"
+                }
+              },
+              "required": ["sellerId"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stripe onboarding link created successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean", "example": true },
+                "url": { "type": "string", "example": "https://connect.stripe.com/setup/s/xxxx" },
+                "message": { "type": "string" }
+              }
+            }
+          },
+          "400": { "description": "Seller ID missing" },
+          "404": { "description": "Seller not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+
+    "/login-seller": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login seller",
+        "description": "Authenticates a seller and returns tokens in cookies.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": { "type": "string", "example": "seller@example.com" },
+                "password": { "type": "string", "example": "12345678" }
+              },
+              "required": ["email", "password"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Seller logged in successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": { "type": "string", "example": "success" },
+                "message": { "type": "string" },
+                "seller": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "email": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid credentials" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+
+    "/logged-in-seller": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get logged-in seller profile",
+        "description": "Returns the profile of the authenticated seller. Requires authentication and seller role.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Seller profile fetched successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "success": { "type": "boolean", "example": true },
+                "seller": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "email": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" },
+          "403": { "description": "Access denied (not a seller)" },
+          "500": { "description": "Server error" }
+        }
+      }
     }
 
   }

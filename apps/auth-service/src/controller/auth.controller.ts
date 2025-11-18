@@ -14,6 +14,12 @@ import bcrypt from 'node_modules/bcryptjs';
 import jwt, { JsonWebTokenError } from 'jsonwebtoken';
 import { clearAuthCookies, setAuthCookies } from '../utils/cookies/setCookie';
 
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-10-29.clover',
+});
+
 /**
  * Register a new user
  * @route POST /api/register-user
@@ -130,7 +136,7 @@ export const loginUser = async (
 
     // ✅ Generate tokens
     const accessToken = jwt.sign(
-      { id: user.id },
+      { id: user.id, role: 'user' },
       process.env.ACCESS_TOKEN_SECRET!,
       {
         expiresIn: '1h',
@@ -138,7 +144,7 @@ export const loginUser = async (
     );
 
     const refreshToken = jwt.sign(
-      { id: user.id },
+      { id: user.id, role: 'user' },
       process.env.REFRESH_TOKEN_SECRET!,
       { expiresIn: '7d' }
     );
@@ -501,5 +507,151 @@ export const createShop = async (
     });
   } catch (err) {
     next(err);
+  }
+};
+
+
+
+const strip = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+// controllers/stripeController.ts
+
+
+export const createStripeConnectLink = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { sellerId } = req.body;
+    console.log(sellerId);
+
+    if (!sellerId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Seller ID is required',
+      });
+    }
+
+    // Check if seller exists in your database
+    const seller = await prisma.sellers.findUnique({
+      where: { id: sellerId },
+    });
+
+    if (!seller) {
+      return res.status(404).json({
+        success: false,
+        message: 'Seller not found',
+      });
+    }
+
+    // Create new Stripe Connect account
+const account = await stripe.accounts.create({
+  type: 'express',
+  country: seller.country || 'US', // Use seller's country from your database
+  email: seller.email ?? undefined,  // ✅ FIX HERE
+  business_type: 'individual',
+  capabilities: {
+    card_payments: { requested: true },
+    transfers: { requested: true },
+  },
+  metadata: {
+    sellerId: seller.id,
+  },
+});
+    // Update seller with Stripe account ID
+    await prisma.sellers.update({
+      where: { id: sellerId },
+      data: {
+        stripeId: account.id,
+      },
+    });
+
+    // Create account link for onboarding
+    const accountLink = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: `${process.env.FRONTEND_URL}/success`,
+      return_url: `${process.env.FRONTEND_URL}/success`,
+      type: 'account_onboarding',
+    });
+
+    return res.status(200).json({
+      success: true,
+      url: accountLink.url,
+      message: 'Stripe onboarding link created successfully',
+    });
+  } catch (err) {
+    console.error('Stripe Connect Error:', err);
+    return next(err);
+  }
+};
+
+export const loginSeller = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return next(new ValidationError('Email and password are required'));
+    }
+
+    const seller = await prisma.sellers.findUnique({ where: { email } });
+
+    if (!seller) {
+      return next(new AuthError('Invalid email or password'));
+    }
+
+    const isMatch = await bcrypt.compare(password, seller.password!);
+    if (!isMatch) {
+      return next(new AuthError('Invalid email or password'));
+    }
+
+    // ✅ Generate tokens
+    const accessToken = jwt.sign(
+      { id: seller.id, role: 'seller' },
+      process.env.ACCESS_TOKEN_SECRET!,
+      {
+        expiresIn: '1h',
+      }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: seller.id , role: 'seller'},
+      process.env.REFRESH_TOKEN_SECRET!,
+      { expiresIn: '7d' }
+    );
+
+    // ✅ Set tokens as cookies
+    setAuthCookies(res, { accessToken, refreshToken });
+
+    // ✅ Response
+    return res.status(200).json({
+      status: 'success',
+      message: 'Logged in successfully',
+      seller: {
+        id: seller.id,
+        name: seller.name,
+        email: seller.email,
+      },
+    });
+  } catch (error) {
+    console.log('❌ Error in loginseller:', error);
+    next(error);
+  }
+};
+
+
+export const getSeller= (req: any, res: Response, next: NextFunction) => {
+  try {
+    const seller = req.seller; // ✅ get current user
+    res.json({
+      message: 'seller profile fetched successfully',
+      success: true,
+      seller,
+    });
+  } catch (error) {
+    next(error);
   }
 };

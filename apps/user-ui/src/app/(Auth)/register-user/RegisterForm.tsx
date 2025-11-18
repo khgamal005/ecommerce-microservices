@@ -17,6 +17,7 @@ type RegisterFormInputs = {
 const RegisterForm = () => {
   const {
     register,
+    watch,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormInputs>();
@@ -35,11 +36,63 @@ const RegisterForm = () => {
   const router = useRouter();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+      const passwordValue = watch('password');
+
 
 
   const inputsRefs = useRef<(HTMLInputElement | null)[]>([]);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const getStrengthData = (password: string) => {
+    if (!password)
+      return {
+        score: 0,
+        color: 'text-gray-400',
+        label: '',
+        bgColor: 'bg-gray-400',
+        segments: [],
+      };
 
+    let score = 0;
+    const requirements = [
+      password.length >= 6,
+      /[A-Z]/.test(password),
+      /[0-9]/.test(password),
+      /[^A-Za-z0-9]/.test(password),
+    ];
+
+    const metCount = requirements.filter(Boolean).length;
+
+    // Map 4 requirements to 3 strength levels
+    if (metCount <= 1) {
+      score = 1; // Weak
+    } else if (metCount <= 2) {
+      score = 2; // Medium
+    } else {
+      score = 3; // Strong
+    }
+
+    const strengthData = [
+      { color: 'text-red-500', label: 'Weak', bgColor: 'bg-red-500' },
+      { color: 'text-yellow-500', label: 'Medium', bgColor: 'bg-yellow-500' },
+      { color: 'text-green-500', label: 'Strong', bgColor: 'bg-green-500' },
+    ];
+
+    const currentStrength = strengthData[score - 1] || strengthData[0];
+
+    return {
+      score,
+      ...currentStrength,
+      segments: requirements.map((met, index) => ({
+        met: index < metCount,
+        requirement: [
+          '6+ characters',
+          'Uppercase letter',
+          'Number',
+          'Special character',
+        ][index],
+      })),
+    };
+  };
   // ✅ OTP Auto Focus
   const handleOtpChange = (index: number, value: string) => {
     if (!/^[0-9]?$/.test(value)) return;
@@ -242,32 +295,82 @@ const RegisterForm = () => {
           </div>
 
           {/* PASSWORD */}
-          <div className="mb-4">
-            <label className="block mb-1 font-medium text-gray-700">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={passwordVisible ? 'text' : 'password'}
-                {...register('password', {
-                  required: 'Password is required',
-                  minLength: { value: 6, message: 'Minimum 6 characters' },
-                })}
-                className="border border-gray-300 rounded-lg px-3 py-2 w-full pr-10"
-                placeholder="Create a password"
-              />
-              <button
-                type="button"
-                onClick={() => setPasswordVisible(!passwordVisible)}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-              >
-                {passwordVisible ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-            <p className="text-red-600 text-sm mt-1">
-              {errors.password?.message}
-            </p>
-          </div>
+                <div>
+                  <label className="block mb-1 font-medium text-gray-700">
+                    Password
+                  </label>
+
+                  <div className="relative">
+                    <input
+                      type={passwordVisible ? 'text' : 'password'}
+                      {...register('password', {
+                        required: 'Password is required',
+                        minLength: {
+                          value: 6,
+                          message: 'Minimum 6 characters',
+                        },
+                      })}
+                      className="border border-gray-300 rounded-lg px-3 py-2 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Create a password"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setPasswordVisible(!passwordVisible)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                    >
+                      {passwordVisible ? (
+                        <EyeOff size={20} />
+                      ) : (
+                        <Eye size={20} />
+                      )}
+                    </button>
+                  </div>
+
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.password?.message}
+                  </p>
+
+                  {/* PASSWORD STRENGTH INDICATOR */}
+                  {passwordValue && (
+                    <div className="mt-3 space-y-2">
+                      {/* Strength bars - 3 segments for 3 strength levels */}
+                      <div className="flex gap-1">
+                        {[1, 2, 3].map((segment) => (
+                          <div
+                            key={segment}
+                            className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                              segment <= getStrengthData(passwordValue).score
+                                ? getStrengthData(passwordValue).bgColor
+                                : 'bg-gray-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Strength text */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">
+                          Strength:{' '}
+                          <span
+                            className={getStrengthData(passwordValue).color}
+                          >
+                            {getStrengthData(passwordValue).label}
+                          </span>
+                        </span>
+
+                        {/* Optional: Show requirements met */}
+                        <span className="text-xs text-gray-500">
+                          {
+                            getStrengthData(passwordValue).segments.filter(
+                              (s) => s.met
+                            ).length
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
           {/* BACKEND ERROR */}
           {serverError && (

@@ -1,6 +1,24 @@
 import express from 'express';
-import { createShop, getUser, loginUser, logoutUser, refreshToken, resendRegistrationOtp, resetUserPassword, sellerRegistration, userForgetPassword, userRegistration, verifySellerRegistration, verifyUserForgetPassword, verifyUserRegistration } from '../controller/auth.controller';
+import {
+  createShop,
+  createStripeConnectLink,
+  getSeller,
+  getUser,
+  loginSeller,
+  loginUser,
+  logoutUser,
+  refreshToken,
+  resendRegistrationOtp,
+  resetUserPassword,
+  sellerRegistration,
+  userForgetPassword,
+  userRegistration,
+  verifySellerRegistration,
+  verifyUserForgetPassword,
+  verifyUserRegistration,
+} from '../controller/auth.controller';
 import { isAuthenticated } from '@packages/middelware/isAuthenticated';
+import { isSeller, isUser } from '@packages/middelware/authorizeRole';
 
 const router = express.Router();
 
@@ -74,10 +92,6 @@ router.post('/login-user', loginUser);
 */
 router.post('/forget-password', userForgetPassword);
 
-
-
-
-
 /*  
 #swagger.tags = ['Auth']
 #swagger.description = 'Verify OTP sent for password reset'
@@ -100,7 +114,6 @@ router.post('/forget-password', userForgetPassword);
 }
 */
 router.post('/verify-forget-password', verifyUserForgetPassword);
-
 
 /*
 #swagger.tags = ['Auth']
@@ -162,7 +175,7 @@ router.post('/resend-otp', resendRegistrationOtp);
 }
 */
 
-router.get('/logged-in-user', isAuthenticated,getUser);
+router.get('/logged-in-user', isAuthenticated, isUser, getUser);
 /*  
 #swagger.tags = ['Auth']
 #swagger.description = "Refresh access and refresh tokens using the refreshToken cookie"
@@ -186,17 +199,16 @@ router.get('/logged-in-user', isAuthenticated,getUser);
   }
 }
 */
-router.post("/refresh-token", refreshToken);
-router.post("/logout", logoutUser);
+router.post('/refresh-token', refreshToken);
+router.post('/logout', logoutUser);
 
+router.post('/register-seller', sellerRegistration);
 
+router.post('/verify-seller', verifySellerRegistration);
 
-router.post("/register-seller",sellerRegistration);
-
-router.post("/verify-seller", verifySellerRegistration);
-
-router.post("/create-shop", createShop);
-
-
+router.post('/create-shop', createShop);
+router.post('/create-stripe-connect-account', createStripeConnectLink);
+router.post('/login-seller', loginSeller);
+router.get('/logged-in-seller', isAuthenticated, isSeller, getSeller);
 
 export default router;

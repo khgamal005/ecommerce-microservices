@@ -7,8 +7,10 @@ import { Eye, EyeOff, Loader2, Store, CreditCard } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { countries } from 'apps/seller-ui/src/utils/countries';
+import CreateShopForm from './CreateShopForm';
+import CreateBankForm from './CreateBankForm';
 
-type RegisterFormInputs = {
+ type RegisterFormInputs = {
   name: string;
   email: string;
   password: string;
@@ -16,40 +18,19 @@ type RegisterFormInputs = {
   country: string;
 };
 
-type ShopFormInputs = {
-  shopName: string;
-  shopType: string;
-  address: string;
-  phone: string;
-};
 
-type BankFormInputs = {
-  bankName: string;
-  accountNumber: string;
-  routingNumber: string;
-  accountHolderName: string;
-};
 
 const RegisterForm = () => {
   const {
     register,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<RegisterFormInputs>();
 
-  const {
-    register: registerShop,
-    handleSubmit: handleSubmitShop,
-    formState: { errors: shopErrors },
-  } = useForm<ShopFormInputs>();
 
-  const {
-    register: registerBank,
-    handleSubmit: handleSubmitBank,
-    formState: { errors: bankErrors },
-  } = useForm<BankFormInputs>();
+
+
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(1);
@@ -70,7 +51,8 @@ const RegisterForm = () => {
 
   const inputsRefs = useRef<(HTMLInputElement | null)[]>([]);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
-  const selectedCountry = watch('country'); // 
+  const passwordValue = watch('password');
+
 
   // ✅ OTP Auto Focus
   const handleOtpChange = (index: number, value: string) => {
@@ -104,6 +86,58 @@ const RegisterForm = () => {
     if (e.key === 'Backspace' && otp[index] === '' && index > 0) {
       inputsRefs.current[index - 1]?.focus();
     }
+  };
+
+  const getStrengthData = (password: string) => {
+    if (!password)
+      return {
+        score: 0,
+        color: 'text-gray-400',
+        label: '',
+        bgColor: 'bg-gray-400',
+        segments: [],
+      };
+
+    let score = 0;
+    const requirements = [
+      password.length >= 6,
+      /[A-Z]/.test(password),
+      /[0-9]/.test(password),
+      /[^A-Za-z0-9]/.test(password),
+    ];
+
+    const metCount = requirements.filter(Boolean).length;
+
+    // Map 4 requirements to 3 strength levels
+    if (metCount <= 1) {
+      score = 1; // Weak
+    } else if (metCount <= 2) {
+      score = 2; // Medium
+    } else {
+      score = 3; // Strong
+    }
+
+    const strengthData = [
+      { color: 'text-red-500', label: 'Weak', bgColor: 'bg-red-500' },
+      { color: 'text-yellow-500', label: 'Medium', bgColor: 'bg-yellow-500' },
+      { color: 'text-green-500', label: 'Strong', bgColor: 'bg-green-500' },
+    ];
+
+    const currentStrength = strengthData[score - 1] || strengthData[0];
+
+    return {
+      score,
+      ...currentStrength,
+      segments: requirements.map((met, index) => ({
+        met: index < metCount,
+        requirement: [
+          '6+ characters',
+          'Uppercase letter',
+          'Number',
+          'Special character',
+        ][index],
+      })),
+    };
   };
 
   // ✅ Timer logic
@@ -152,10 +186,12 @@ const RegisterForm = () => {
       setSuccessMessage(json.message);
       setShowOtp(true);
       setSellerData(data);
-      startTimer();
     },
 
-    onError: (err: any) => setServerError(err.message),
+    onError: (err: any) => {
+      setServerError(err.message);
+      startTimer();
+    },
   });
 
   const onSubmit = (data: RegisterFormInputs) => {
@@ -219,21 +255,7 @@ const RegisterForm = () => {
     onError: () => setServerError('Failed to resend OTP'),
   });
 
-  // ✅ Shop Setup Handler
-  const onShopSubmit = (data: ShopFormInputs) => {
-    console.log('Shop data:', data);
-    setActiveStep(3); // Move to bank setup
-  };
-
-  // ✅ Bank Setup Handler
-  const onBankSubmit = (data: BankFormInputs) => {
-    console.log('Bank data:', data);
-    setMessage('🎉 Setup completed successfully!');
-
-    timeoutRef.current = setTimeout(() => {
-      router.push('/login');
-    }, 2000);
-  };
+ 
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center pt-8 bg-gray-50">
@@ -359,9 +381,6 @@ const RegisterForm = () => {
                     {...register('country', {
                       required: 'Country is required',
                     })}
-                    onChange={(e) => {
-                      setValue('country', e.target.value); // update form data
-                    }}
                     className="border border-gray-300 rounded-lg px-3 py-2 w-full"
                   >
                     <option value="">Select country</option>
@@ -378,24 +397,12 @@ const RegisterForm = () => {
                   </p>
                 </div>
 
-                {/* Display Dial Code */}
-                {selectedCountry && (
-                  <div className="text-sm text-gray-700">
-                    Dial Code:{' '}
-                    <span className="font-bold">
-                      {
-                        countries.find((c) => c.code === selectedCountry)
-                          ?.dial_code
-                      }
-                    </span>
-                  </div>
-                )}
-
                 {/* PASSWORD */}
                 <div>
                   <label className="block mb-1 font-medium text-gray-700">
                     Password
                   </label>
+
                   <div className="relative">
                     <input
                       type={passwordVisible ? 'text' : 'password'}
@@ -409,6 +416,7 @@ const RegisterForm = () => {
                       className="border border-gray-300 rounded-lg px-3 py-2 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Create a password"
                     />
+
                     <button
                       type="button"
                       onClick={() => setPasswordVisible(!passwordVisible)}
@@ -421,15 +429,63 @@ const RegisterForm = () => {
                       )}
                     </button>
                   </div>
+
                   <p className="text-red-600 text-sm mt-1">
                     {errors.password?.message}
                   </p>
+
+                  {/* PASSWORD STRENGTH INDICATOR */}
+                  {passwordValue && (
+                    <div className="mt-3 space-y-2">
+                      {/* Strength bars - 3 segments for 3 strength levels */}
+                      <div className="flex gap-1">
+                        {[1, 2, 3].map((segment) => (
+                          <div
+                            key={segment}
+                            className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                              segment <= getStrengthData(passwordValue).score
+                                ? getStrengthData(passwordValue).bgColor
+                                : 'bg-gray-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Strength text */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">
+                          Strength:{' '}
+                          <span
+                            className={getStrengthData(passwordValue).color}
+                          >
+                            {getStrengthData(passwordValue).label}
+                          </span>
+                        </span>
+
+                        {/* Optional: Show requirements met */}
+                        <span className="text-xs text-gray-500">
+                          {
+                            getStrengthData(passwordValue).segments.filter(
+                              (s) => s.met
+                            ).length
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* BACKEND ERROR */}
                 {serverError && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-red-600 text-sm">{serverError}</p>
+                    <p className="text-sm text-gray-600">
+                      Resend OTP in{' '}
+                      <span className="text-blue-500 font-semibold">
+                        {timer}
+                      </span>
+                      s
+                    </p>{' '}
                   </div>
                 )}
 
@@ -555,232 +611,13 @@ const RegisterForm = () => {
             )}
           </>
         )}
-
         {activeStep === 2 && (
-          /* ✅ Shop Setup Screen */
-          <form onSubmit={handleSubmitShop(onShopSubmit)} className="space-y-4">
-            <div className="text-center mb-6">
-              <Store className="mx-auto mb-3 text-blue-500" size={48} />
-              <h2 className="text-2xl font-semibold text-gray-800">
-                Setup Your Shop
-              </h2>
-              <p className="text-gray-600 text-sm mt-2">
-                Tell us about your business
-              </p>
-            </div>
-
-            {/* SHOP NAME */}
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Shop Name
-              </label>
-              <input
-                type="text"
-                {...registerShop('shopName', {
-                  required: 'Shop name is required',
-                })}
-                className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your shop name"
-              />
-              <p className="text-red-600 text-sm mt-1">
-                {shopErrors.shopName?.message}
-              </p>
-            </div>
-
-            {/* SHOP TYPE */}
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Shop Type
-              </label>
-              <select
-                {...registerShop('shopType', {
-                  required: 'Shop type is required',
-                })}
-                className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select shop type</option>
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-                <option value="service">Service</option>
-                <option value="restaurant">Restaurant</option>
-                <option value="other">Other</option>
-              </select>
-              <p className="text-red-600 text-sm mt-1">
-                {shopErrors.shopType?.message}
-              </p>
-            </div>
-
-            {/* ADDRESS */}
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Address
-              </label>
-              <input
-                type="text"
-                {...registerShop('address', {
-                  required: 'Address is required',
-                })}
-                className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your shop address"
-              />
-              <p className="text-red-600 text-sm mt-1">
-                {shopErrors.address?.message}
-              </p>
-            </div>
-
-            {/* PHONE */}
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                {...registerShop('phone', {
-                  required: 'Phone number is required',
-                  pattern: {
-                    value: /^[0-9+\-\s()]+$/,
-                    message: 'Invalid phone number',
-                  },
-                })}
-                className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your phone number"
-              />
-              <p className="text-red-600 text-sm mt-1">
-                {shopErrors.phone?.message}
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors"
-            >
-              Continue to Bank Setup
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveStep(1)}
-              className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Back
-            </button>
-          </form>
+          <CreateShopForm sellerId={sellerId} setActiveStep={setActiveStep} />
         )}
 
         {activeStep === 3 && (
-          /* ✅ Bank Setup Screen */
-          <form onSubmit={handleSubmitBank(onBankSubmit)} className="space-y-4">
-            <div className="text-center mb-6">
-              <CreditCard className="mx-auto mb-3 text-blue-500" size={48} />
-              <h2 className="text-2xl font-semibold text-gray-800">
-                Connect Your Bank
-              </h2>
-              <p className="text-gray-600 text-sm mt-2">
-                Secure bank connection for payments
-              </p>
-            </div>
+          <CreateBankForm  sellerId={sellerId}/>
 
-            {/* BANK NAME */}
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Bank Name
-              </label>
-              <input
-                type="text"
-                {...registerBank('bankName', {
-                  required: 'Bank name is required',
-                })}
-                className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your bank name"
-              />
-              <p className="text-red-600 text-sm mt-1">
-                {bankErrors.bankName?.message}
-              </p>
-            </div>
-
-            {/* ACCOUNT HOLDER NAME */}
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Account Holder Name
-              </label>
-              <input
-                type="text"
-                {...registerBank('accountHolderName', {
-                  required: 'Account holder name is required',
-                })}
-                className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter account holder name"
-              />
-              <p className="text-red-600 text-sm mt-1">
-                {bankErrors.accountHolderName?.message}
-              </p>
-            </div>
-
-            {/* ACCOUNT NUMBER */}
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Account Number
-              </label>
-              <input
-                type="text"
-                {...registerBank('accountNumber', {
-                  required: 'Account number is required',
-                  pattern: {
-                    value: /^[0-9]+$/,
-                    message: 'Invalid account number',
-                  },
-                })}
-                className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter account number"
-              />
-              <p className="text-red-600 text-sm mt-1">
-                {bankErrors.accountNumber?.message}
-              </p>
-            </div>
-
-            {/* ROUTING NUMBER */}
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Routing Number
-              </label>
-              <input
-                type="text"
-                {...registerBank('routingNumber', {
-                  required: 'Routing number is required',
-                  pattern: {
-                    value: /^[0-9]+$/,
-                    message: 'Invalid routing number',
-                  },
-                })}
-                className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter routing number"
-              />
-              <p className="text-red-600 text-sm mt-1">
-                {bankErrors.routingNumber?.message}
-              </p>
-            </div>
-
-            {message && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-600 text-sm text-center">{message}</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors"
-            >
-              Complete Setup
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveStep(2)}
-              className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Back
-            </button>
-          </form>
         )}
       </div>
     </div>
