@@ -10,7 +10,6 @@ export const countries = [
   { code: "DE", name: "Germany", dial_code: "+49" },
   { code: "IT", name: "Italy", dial_code: "+39" },
   { code: "ES", name: "Spain", dial_code: "+34" },
-  { code: "BR", name: "Brazil", dial_code: "+55" },
   { code: "AR", name: "Argentina", dial_code: "+54" },
   { code: "MX", name: "Mexico", dial_code: "+52" },
   { code: "RU", name: "Russia", dial_code: "+7" },
