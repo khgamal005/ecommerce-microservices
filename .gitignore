@@ -53,3 +53,4 @@ out
 .env*
 .history/
 .history/
+.env
