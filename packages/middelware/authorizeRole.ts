@@ -13,6 +13,8 @@ declare module "express-serve-static-core" {
 
 
 export const isSeller = (req: Request, res: Response, next: NextFunction) => {
+  console.log(req.role);
+
   if (req.role !== "seller") {
     return next(new AuthError("Unauthorized seller only"));
   }

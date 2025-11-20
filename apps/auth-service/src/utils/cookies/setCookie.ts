@@ -13,25 +13,27 @@ export const setAuthCookies = (
   res: Response,
   { accessToken, refreshToken }: CookieOptions
 ) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  
   const baseOptions = {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
-    domain: process.env.NODE_ENV === "production" ? ".yourdomain.com" : "localhost",
+    secure: isProduction,
+    domain: isProduction ? ".yourdomain.com" : "localhost",
     path: "/",
   };
 
   // Access Token (1 hour)
   res.cookie("accessToken", accessToken, {
     ...baseOptions,
-    maxAge: 60 * 60 * 1000,
+    maxAge: 60 * 60 * 1000, // 1 hour
   });
 
-  // Refresh Token (optional)
+  // Refresh Token (optional - 7 days)
   if (refreshToken) {
     res.cookie("refreshToken", refreshToken, {
       ...baseOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
   }
 };

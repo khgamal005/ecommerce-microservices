@@ -8,7 +8,6 @@ interface CreateShopFormProps {
 }
 
 const CreateBankForm: React.FC<CreateShopFormProps> = ({ sellerId }) => {
-  console.log(sellerId);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

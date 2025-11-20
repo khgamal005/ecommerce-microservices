@@ -274,31 +274,45 @@ export const refreshToken = async (
     }
 
     // Verify refresh token
-    let decoded: { id: string; role: string };
+    let decoded: { id: string; role: 'seller' | 'user' };
     try {
       decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!) as {
         id: string;
-        role: string;
+        role: 'seller' | 'user';
       };
     } catch (err) {
       return next(new JsonWebTokenError('Forbidden: invalid refresh token'));
     }
 
-    // Check if user exists
-    const user = await prisma.users.findUnique({ where: { id: decoded.id } });
-    if (!user) {
-      return next(new AuthError('User not found'));
+    let account;
+
+    // Check if account exists based on role
+    if (decoded.role === 'user') {
+      account = await prisma.users.findUnique({
+        where: { id: decoded.id },
+      });
+    } else if (decoded.role === 'seller') {
+      account = await prisma.sellers.findUnique({
+        where: { id: decoded.id },
+        include: {
+          shop: true,
+        },
+      });
+    }
+
+    if (!account) {
+      return next(new AuthError('Account not found'));
     }
 
     // Generate new tokens with consistent payload
     const accessToken = jwt.sign(
-      { id: user.id, role: decoded.role },
+      { id: account.id, role: decoded.role },
       process.env.ACCESS_TOKEN_SECRET!,
-      { expiresIn: '15m' }
+      { expiresIn: '1h' } // Changed to 1h to match your login
     );
 
     const refreshToken = jwt.sign(
-      { id: user.id, role: decoded.role }, // include role for consistency
+      { id: account.id, role: decoded.role },
       process.env.REFRESH_TOKEN_SECRET!,
       { expiresIn: '7d' }
     );
@@ -306,7 +320,10 @@ export const refreshToken = async (
     // Set cookies
     setAuthCookies(res, { accessToken, refreshToken });
 
-    return res.status(200).json({ message: 'Tokens refreshed successfully' });
+    return res.status(200).json({
+      message: 'Tokens refreshed successfully',
+      role: decoded.role,
+    });
   } catch (err) {
     console.error('❌ Error in refreshToken:', err);
     next(err);
@@ -328,7 +345,7 @@ export const getUser = (req: any, res: Response, next: NextFunction) => {
 
 //  * @route POST /api/logout
 
-export const logoutUser = (req: Request, res: Response) => {
+export const logout = (req: Request, res: Response) => {
   try {
     // Clear the authentication cookies
     clearAuthCookies(res);
@@ -510,11 +527,8 @@ export const createShop = async (
   }
 };
 
-
-
 const strip = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 // controllers/stripeController.ts
-
 
 export const createStripeConnectLink = async (
   req: Request,
@@ -545,19 +559,19 @@ export const createStripeConnectLink = async (
     }
 
     // Create new Stripe Connect account
-const account = await stripe.accounts.create({
-  type: 'express',
-  country: seller.country || 'US', // Use seller's country from your database
-  email: seller.email ?? undefined,  // ✅ FIX HERE
-  business_type: 'individual',
-  capabilities: {
-    card_payments: { requested: true },
-    transfers: { requested: true },
-  },
-  metadata: {
-    sellerId: seller.id,
-  },
-});
+    const account = await strip.accounts.create({
+      type: 'express',
+      country: 'GB',
+      email: seller.email ?? undefined, // ✅ FIX HERE
+      business_type: 'individual',
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      metadata: {
+        sellerId: seller.id,
+      },
+    });
     // Update seller with Stripe account ID
     await prisma.sellers.update({
       where: { id: sellerId },
@@ -618,7 +632,7 @@ export const loginSeller = async (
     );
 
     const refreshToken = jwt.sign(
-      { id: seller.id , role: 'seller'},
+      { id: seller.id, role: 'seller' },
       process.env.REFRESH_TOKEN_SECRET!,
       { expiresIn: '7d' }
     );
@@ -642,8 +656,7 @@ export const loginSeller = async (
   }
 };
 
-
-export const getSeller= (req: any, res: Response, next: NextFunction) => {
+export const getSeller = (req: any, res: Response, next: NextFunction) => {
   try {
     const seller = req.seller; // ✅ get current user
     res.json({

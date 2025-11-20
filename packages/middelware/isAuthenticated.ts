@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 interface AuthRequest extends Request {
   seller?: sellers;
   user?: users;
+  role?: "seller" | "admin" | "user";
 }
 
 export const isAuthenticated = async (
@@ -34,7 +35,10 @@ export const isAuthenticated = async (
       return;
     }
 
+    req.role = decoded.role;
+
     let account;
+
     if (decoded.role === 'user') {
       account = await prisma.users.findUnique({
         where: { id: decoded.id },
@@ -55,6 +59,7 @@ export const isAuthenticated = async (
         req.seller = account;
       }
     }
+
     if (!account) {
       res.status(401).json({ message: 'Unauthorized: Account not found' });
       return;

@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className={`min-h-screen  font-sans antialiased ${poppins.variable}`}>
           <Toaster position="bottom-right" reverseOrder={true} />{' '}
         <ReactQueryProvider>
           {/* <Header /> */}

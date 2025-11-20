@@ -6,7 +6,7 @@ import {
   getUser,
   loginSeller,
   loginUser,
-  logoutUser,
+  logout,
   refreshToken,
   resendRegistrationOtp,
   resetUserPassword,
@@ -200,7 +200,7 @@ router.get('/logged-in-user', isAuthenticated, isUser, getUser);
 }
 */
 router.post('/refresh-token', refreshToken);
-router.post('/logout', logoutUser);
+router.post('/logout',logout );
 
 router.post('/register-seller', sellerRegistration);
 

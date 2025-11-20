@@ -29,6 +29,7 @@
         "responses": { "201": { "description": "Created" } }
       }
     },
+
     "/verify-user": {
       "post": {
         "description": "",
@@ -50,6 +51,7 @@
         "responses": { "201": { "description": "Created" } }
       }
     },
+
     "/login-user": {
       "post": {
         "description": "",
@@ -69,6 +71,7 @@
         "responses": { "200": { "description": "OK" } }
       }
     },
+
     "/forget-password": {
       "post": {
         "description": "Send OTP for password reset",
@@ -91,6 +94,7 @@
         }
       }
     },
+
     "/verify-forget-password": {
       "post": {
         "description": "Verify OTP sent for password reset",
@@ -110,12 +114,13 @@
           }
         ],
         "responses": {
-          "200": { "description": "OTP verified successfully, user can reset password" },
+          "200": { "description": "OTP verified successfully" },
           "400": { "description": "Validation error / OTP invalid" },
           "404": { "description": "User not found" }
         }
       }
     },
+
     "/reset-password": {
       "post": {
         "description": "Reset user password using OTP",
@@ -141,6 +146,7 @@
         }
       }
     },
+
     "/resend-otp": {
       "post": {
         "description": "Resend OTP to user email for account activation",
@@ -166,87 +172,34 @@
         }
       }
     },
+
     "/logged-in-user": {
       "get": {
-        "description": "Get the currently logged-in user's profile using JWT from cookie or Authorization header",
+        "description": "Get the currently logged-in user's profile",
         "tags": ["Auth"],
-        "security": [{ "bearerAuth": [] }],
         "responses": {
-          "200": {
-            "description": "Successfully fetched the logged-in user's profile",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "message": {
-                      "type": "string",
-                      "example": "User profile fetched successfully"
-                    },
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": { "type": "string", "example": "654f13c29a71a8d74b57d8e2" },
-                        "name": { "type": "string", "example": "Khaled Gamal" },
-                        "email": { "type": "string", "example": "khgamal005@gmail.com" },
-                        "role": { "type": "string", "enum": ["user", "seller", "admin"], "example": "user" },
-                        "createdAt": { "type": "string", "format": "date-time", "example": "2025-11-13T00:00:00.000Z" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized — Missing or invalid token",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object", "properties": { "message": { "type": "string", "example": "Unauthorized: No token provided" } } }
-              }
-            }
-          }
+          "200": { "description": "Profile fetched successfully" },
+          "401": { "description": "Unauthorized" }
         }
       }
     },
+
     "/refresh-token": {
       "post": {
-        "description": "Refresh access and refresh tokens using the refreshToken cookie",
+        "description": "Refresh access and refresh tokens",
         "tags": ["Auth"],
-        "security": [{ "bearerAuth": [] }],
         "responses": {
-          "200": {
-            "description": "Tokens refreshed successfully",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object", "properties": { "message": { "type": "string", "example": "Tokens refreshed successfully" } } }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized — No refresh token provided or missing",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object", "properties": { "message": { "type": "string", "example": "Unauthorized: no refresh token" } } }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden — Invalid refresh token",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object", "properties": { "message": { "type": "string", "example": "Forbidden: invalid refresh token" } } }
-              }
-            }
-          }
+          "200": { "description": "Tokens refreshed successfully" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Invalid refresh token" }
         }
       }
     },
-        "/register-seller": {
+
+    "/register-seller": {
       "post": {
-        "description": "Register seller and send OTP to email",
         "tags": ["Seller"],
+        "description": "Register seller and send OTP",
         "parameters": [
           {
             "name": "body",
@@ -263,17 +216,17 @@
           }
         ],
         "responses": {
-          "201": { "description": "OTP sent to seller email" },
+          "201": { "description": "OTP sent" },
           "400": { "description": "Validation error" },
-          "409": { "description": "Seller already exists" }
+          "409": { "description": "Seller exists" }
         }
       }
     },
 
     "/verify-seller": {
       "post": {
-        "description": "Verify seller registration using OTP",
         "tags": ["Seller"],
+        "description": "Verify seller OTP",
         "parameters": [
           {
             "name": "body",
@@ -293,53 +246,47 @@
           }
         ],
         "responses": {
-          "201": { "description": "Seller verified and created" },
-          "400": { "description": "Validation error or OTP invalid" },
-          "409": { "description": "Seller already exists" }
+          "201": { "description": "Seller verified" },
+          "400": { "description": "Invalid OTP" },
+          "409": { "description": "Seller exists" }
         }
       }
     },
 
     "/create-shop": {
       "post": {
-        "description": "Create a shop for a verified seller",
         "tags": ["Shop"],
+        "description": "Create a shop for a seller",
         "parameters": [
           {
             "name": "body",
             "in": "body",
-            "required": true,
             "schema": {
               "type": "object",
               "properties": {
                 "sellerId": { "example": "675fa2c97a32e6ac96c12345" },
                 "name": { "example": "Khaled Electronics" },
-                "bio": { "example": "We sell electronics and accessories" },
+                "bio": { "example": "We sell electronics" },
                 "category": { "example": "Electronics" },
-                "address": { "example": "Cairo, Egypt" },
+                "address": { "example": "Cairo" },
                 "opining_hours": { "example": "9AM - 10PM" },
-                "webSite": { "example": "https://khaledelectronics.com" },
-                "socialLinks": {
-                  "example": [
-                    { "platform": "facebook", "url": "https://facebook.com/shop" },
-                    { "platform": "instagram", "url": "https://instagram.com/shop" }
-                  ]
-                }
+                "webSite": { "example": "https://shop.com" },
+                "socialLinks": { "example": [] }
               }
             }
           }
         ],
         "responses": {
-          "201": { "description": "Shop created successfully" },
-          "400": { "description": "Validation error" },
+          "201": { "description": "Shop created" },
           "409": { "description": "Seller already has a shop" }
         }
       }
-    },"/create-stripe-connect-account": {
+    },
+
+    "/create-stripe-connect-account": {
       "post": {
         "tags": ["Stripe"],
-        "summary": "Create Stripe Connect onboarding link",
-        "description": "Creates a Stripe Express Connect account for a seller and returns an onboarding link.",
+        "description": "Create Stripe Connect onboarding link",
         "parameters": [
           {
             "name": "body",
@@ -348,30 +295,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "sellerId": {
-                  "type": "string",
-                  "example": "675cb2e65b1234567890abcd"
-                }
-              },
-              "required": ["sellerId"]
+                "sellerId": { "example": "675cb2e65b1234567890abcd" }
+              }
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "Stripe onboarding link created successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "success": { "type": "boolean", "example": true },
-                "url": { "type": "string", "example": "https://connect.stripe.com/setup/s/xxxx" },
-                "message": { "type": "string" }
-              }
-            }
-          },
-          "400": { "description": "Seller ID missing" },
-          "404": { "description": "Seller not found" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Onboarding link created" },
+          "404": { "description": "Seller not found" }
         }
       }
     },
@@ -379,8 +310,7 @@
     "/login-seller": {
       "post": {
         "tags": ["Auth"],
-        "summary": "Login seller",
-        "description": "Authenticates a seller and returns tokens in cookies.",
+        "description": "Login seller",
         "parameters": [
           {
             "name": "body",
@@ -389,34 +319,15 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": { "type": "string", "example": "seller@example.com" },
-                "password": { "type": "string", "example": "12345678" }
-              },
-              "required": ["email", "password"]
+                "email": { "example": "seller@example.com" },
+                "password": { "example": "12345678" }
+              }
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "Seller logged in successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": { "type": "string", "example": "success" },
-                "message": { "type": "string" },
-                "seller": {
-                  "type": "object",
-                  "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" },
-                    "email": { "type": "string" }
-                  }
-                }
-              }
-            }
-          },
-          "401": { "description": "Invalid credentials" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Seller logged in" },
+          "401": { "description": "Invalid credentials" }
         }
       }
     },
@@ -424,34 +335,24 @@
     "/logged-in-seller": {
       "get": {
         "tags": ["Auth"],
-        "summary": "Get logged-in seller profile",
-        "description": "Returns the profile of the authenticated seller. Requires authentication and seller role.",
-        "parameters": [],
+        "description": "Get seller profile",
         "responses": {
-          "200": {
-            "description": "Seller profile fetched successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": { "type": "string" },
-                "success": { "type": "boolean", "example": true },
-                "seller": {
-                  "type": "object",
-                  "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" },
-                    "email": { "type": "string" }
-                  }
-                }
-              }
-            }
-          },
-          "401": { "description": "Not authenticated" },
-          "403": { "description": "Access denied (not a seller)" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Seller profile returned" },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    },
+
+    "/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout user/seller",
+        "description": "Clears authentication cookies.",
+        "responses": {
+          "200": { "description": "Logged out successfully" },
+          "500": { "description": "Logout error" }
         }
       }
     }
-
   }
 }

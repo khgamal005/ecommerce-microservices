@@ -33,7 +33,7 @@ const LoginForm = () => {
 // ✅ React Query — Login Mutation
 const loginMutation = useMutation({
   mutationFn: async (data: LoginInputs) => {
-    const res = await fetch(`${API_URL}/api/login-user`, {
+    const res = await fetch(`${API_URL}/api/login-seller`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
