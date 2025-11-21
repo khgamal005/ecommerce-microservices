@@ -10,7 +10,6 @@ const TestPage = () => {
   const handleLoginTest = async () => {
     // For testing, you might want to simulate a login
     // This would typically be done through your login form
-    console.log('Redirect to login page or show login form');
   };
 
   const handleRefresh = () => {

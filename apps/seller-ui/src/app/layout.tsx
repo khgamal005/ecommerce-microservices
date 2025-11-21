@@ -1,8 +1,8 @@
 import './global.css';
 // import Header from "./shared/widgets/header/Header";
-import { Roboto } from 'next/font/google';
-import { Toaster } from 'react-hot-toast';
+import { Poppins, Roboto } from 'next/font/google';
 import ReactQueryProvider from './providers/provider';
+import { ToasterClient } from '../shared/components/toast/ToasterClient';
 
 export const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -10,7 +10,7 @@ export const roboto = Roboto({
   variable: '--font-roboto',
 });
 
-export const poppins = Roboto({
+export const poppins = Poppins({
   weight: ['300', '400', '500', '700', '800', '900'],
   subsets: ['latin'],
   variable: '--font-poppins',
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`min-h-screen  font-sans antialiased ${poppins.variable}`}>
-          <Toaster position="bottom-right" reverseOrder={true} />{' '}
+          <ToasterClient />
         <ReactQueryProvider>
           {/* <Header /> */}
           {children}

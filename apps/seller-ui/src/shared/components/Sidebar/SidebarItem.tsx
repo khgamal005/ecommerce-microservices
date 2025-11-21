@@ -1,7 +1,8 @@
 // components/SidebarItem.tsx
 'use client';
 
-import { useSidebar } from '../../app/hook/useSidebar';
+import Link from 'next/link';
+import { useSidebar } from '../../../app/hook/useSidebar';
 import {
   SidebarItemLink,
   SidebarItemContainer,
@@ -12,16 +13,15 @@ import {
 interface SidebarItemProps {
   icon: React.ReactNode;
   title: string;
-  itemId: string;
   href: string;
+  isActive: boolean;
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ icon, title, itemId, href }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon, title, href, isActive }) => {
   const { activeItem, setActive } = useSidebar();
-  const isActive = activeItem === itemId;
 
   const handleClick = () => {
-    setActive(itemId);
+    setActive(href);
   };
 
   return (
