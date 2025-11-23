@@ -41,14 +41,14 @@ const loginMutation = useMutation({
     });
 
     const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Login failed');
+    if (!res.ok) throw new Error(json.message );
 
     return json; // ✅ return backend response
   },
 
   onSuccess: (json) => {
 
-    toast.success(` ${json.message} || 'Logged in successfully'`)
+toast.success(json.message);
 
 
     router.push('/');

@@ -2,13 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useSidebar } from '../../../app/hook/useSidebar';
 import {
   SidebarItemLink,
   SidebarItemContainer,
   SidebarItemIcon,
   SidebarItemTitle
 } from './sidebar.style';
+import { useSidebar } from 'apps/seller-ui/src/app/hook/useSidebar';
 
 interface SidebarItemProps {
   icon: React.ReactNode;

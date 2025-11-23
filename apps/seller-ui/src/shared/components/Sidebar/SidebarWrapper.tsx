@@ -2,8 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import useSeller from '../../../app/hook/useSeller';
-import { useSidebar } from '../../../app/hook/useSidebar';
+
 import { usePathname } from 'next/navigation';
 import Box from '../Box';
 import Link from 'next/link';
@@ -27,13 +26,13 @@ import {
   TicketPercent,
 } from 'lucide-react';
 import SidebarMenu from './SidebarMenu';
+import { useSidebar } from 'apps/seller-ui/src/app/hook/useSidebar';
+import useSeller from 'apps/seller-ui/src/app/hook/useSeller';
 
 const SidebarWrapper = () => {
   const { activeItem, setActive } = useSidebar();
   const pathname = usePathname();
-  const { seller, isLoading, error, logout, isLoggingOut, refetch } =
-    useSeller();
-  console.log(seller);
+  const { seller, isLoading, error, logout, isLoggingOut, refetch } =useSeller();
 
   useEffect(() => {
     setActive(pathname);

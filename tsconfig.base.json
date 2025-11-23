@@ -25,7 +25,9 @@
     "customConditions": ["@my-app/source"],
 
     "paths": {
-      "@packages/*": ["packages/*"]
+      "@packages/*": ["packages/*"],
+      "@packages/prisma": ["packages/libs/prisma/index"]
+
     }
   },
   "exclude": ["node_modules", "tmp"]

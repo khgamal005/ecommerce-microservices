@@ -14,7 +14,7 @@
     "src/**/*.ts", 
     "src/**/*.json",
     "../../packages/**/*"
-  ],
+,  ],
   "exclude": [
     "out-tsc",
     "dist",
