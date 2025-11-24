@@ -2,6 +2,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "composite": true,
+    "jsx": "react-jsx",
+
     "declarationMap": true,
     "emitDeclarationOnly": false,
     "importHelpers": true,
@@ -27,7 +29,6 @@
     "paths": {
       "@packages/*": ["packages/*"],
       "@packages/prisma": ["packages/libs/prisma/index"]
-
     }
   },
   "exclude": ["node_modules", "tmp"]

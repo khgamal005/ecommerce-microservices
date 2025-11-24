@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+      "outDir": "dist",
+    "rootDir": "../../",
     "jsx": "preserve",
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -21,6 +23,7 @@
     }
   },
   "include": [
+    "../../packages/**/*.tsx",
     "next-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
