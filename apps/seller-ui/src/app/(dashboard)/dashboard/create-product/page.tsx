@@ -7,6 +7,7 @@ import ImagePlaceholder from 'apps/seller-ui/src/shared/components/image-placeho
 import Input from 'packages/components/input';
 import ColorSelector from 'packages/components/color-selector';
 import CustomSpecifications from 'packages/components/custom-spacification';
+import CustomProperties from 'packages/components/custom-properties';
 
 interface ProductFormData {
   name: string;
@@ -20,8 +21,7 @@ interface ProductFormData {
   warranty: number | string | null;
   images: (File | null)[];
   colors: string[];
-    specifications: { key: string; value: string }[]; 
-
+  specifications: { key: string; value: string }[];
 }
 
 export default function Page() {
@@ -47,6 +47,8 @@ export default function Page() {
       stock: 0,
       tags: '',
       images: [null],
+      colors: [],
+      specifications: [],
     },
   });
 
@@ -304,9 +306,21 @@ export default function Page() {
 
             {/* Color Selector */}
             <div>
-              <ColorSelector
+              <ColorSelector control={control} error={errors.colors?.message} />
+            </div>
+            {/* spacification  */}
+
+            <div>
+              <CustomSpecifications
                 control={control}
-                error={errors.colors?.message}
+                error={errors.specifications?.message as string}
+              />
+            </div>
+                        {/* properties  */}
+
+            <div>
+              <CustomProperties
+                control={control}
               />
             </div>
 
@@ -338,8 +352,10 @@ export default function Page() {
           {/* RIGHT — IMAGE PREVIEW SECTION */}
           <div className="lg:w-1/2 w-full">
             <div className="bg-gray-800 rounded-lg p-4 sticky top-4">
-              <h3 className="text-lg font-semibold text-white mb-4">Image Preview</h3>
-              
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Image Preview
+              </h3>
+
               {/* Main Image */}
               <div className="mb-4">
                 {images[0] && (
@@ -400,15 +416,6 @@ export default function Page() {
                     />
                   </div>
                 ))}
-
-                <div>
-                  <CustomSpecifications
-  control={control}
-  name="specifications"
-  error={errors.specifications?.message}
-/>
-
-                </div>
               </div>
 
               {/* Image Upload Info */}

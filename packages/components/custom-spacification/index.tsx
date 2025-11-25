@@ -1,107 +1,78 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Controller } from 'react-hook-form';
+import { Controller, useFieldArray } from 'react-hook-form';
 import { PlusIcon, TrashIcon } from 'lucide-react';
 import Input from '../input';
 
-interface Spec {
-  key: string;
-  value: string;
-}
-
-interface CustomSpecificationsProps {
-  control: any; // react-hook-form control
-  name: string; // field name in form (e.g., "specifications")
-  error?: string;
-}
-
-const CustomSpecifications: React.FC<CustomSpecificationsProps> = ({
-  control,
-  name,
-  error,
-}) => {
-  const [specs, setSpecs] = useState<Spec[]>([{ key: '', value: '' }]);
-
-  const handleAddSpec = () => {
-    setSpecs([...specs, { key: '', value: '' }]);
-  };
-
-  const handleRemoveSpec = (index: number) => {
-    const updated = specs.filter((_, i) => i !== index);
-    setSpecs(updated.length ? updated : [{ key: '', value: '' }]); // ensure at least one
-  };
-
-  const handleChange = (
-    index: number,
-    field: 'key' | 'value',
-    value: string
-  ) => {
-    const updated = [...specs];
-    updated[index][field] = value;
-    setSpecs(updated);
-  };
+const CustomSpecifications = ({ control, error }: any) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'specifications',
+  });
 
   return (
-    <Controller
-      control={control}
-      name={name}
-      defaultValue={[]}
-      render={({ field }) => {
-        // Sync specs to react-hook-form when specs change
-        useEffect(() => {
-          field.onChange(specs);
-        }, [specs]);
+    <div>
+      <label className="block font-semibold text-gray-300 mb-2">
+        Custom Specifications
+      </label>
 
-        return (
-          <div className="w-full mt-4">
-            <label className="block font-semibold text-gray-300 mb-2">
-              Custom Specifications
-            </label>
+      <div className="flex flex-col gap-3">
+        {fields.map((field, index) => (
+          <div key={field.id} className="flex gap-3 items-center">
+            {/* KEY FIELD */}
+            <Controller
+              name={`specifications.${index}.key`}
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Input
+                  label={`Key ${index + 1}`}
+                  type="text"
+                  placeholder="eg., battery life ,wight ,material"
+                  {...field}
+                />
+              )}
+            />
 
-            <div className="flex flex-col gap-2">
-              {specs.map((spec, index) => (
-                <div key={index} className="flex gap-2 items-center">
-                  <Input
-                    type="text"
-                    placeholder="Specification"
-                    value={spec.key}
-                    onChange={(e) => handleChange(index, 'key', e.target.value)}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Value"
-                    value={spec.value}
-                    onChange={(e) => handleChange(index, 'value', e.target.value)}
-                    className="flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSpec(index)}
-                    className="p-2 text-red-500 hover:text-red-700"
-                    aria-label="Remove specification"
-                  >
-                    <TrashIcon size={16} />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={handleAddSpec}
-                className="flex items-center gap-1 text-blue-500 hover:text-blue-700 mt-2"
-                aria-label="Add specification"
-              >
-                <PlusIcon size={16} />
-                Add Specification
-              </button>
-            </div>
+            {/* VALUE FIELD */}
+            <Controller
+              name={`specifications.${index}.value`}
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Input
+                  label={`Value ${index + 1}`}
+                  placeholder="eg., 6kg, 4000mAh ,plastic"
+                  type="text"
+                  {...field}
+                />
+              )}
+            />
 
-            {error && <span className="text-red-500 text-xs mt-1">{error}</span>}
+            {/* REMOVE BUTTON */}
+            <button
+              type="button"
+              onClick={() => remove(index)}
+              className="p-2 bg-red-500 text-white rounded"
+            >
+              <TrashIcon size={18} />
+            </button>
           </div>
-        );
-      }}
-    />
+        ))}
+
+        {/* ADD BUTTON */}
+        <button
+          type="button"
+          onClick={() => append({ key: '', value: '' })}
+          className="flex items-center gap-2 text-blue-400"
+        >
+          <PlusIcon size={18} />
+          Add Specification
+        </button>
+      </div>
+
+      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+    </div>
   );
 };
 
