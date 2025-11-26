@@ -1,0 +1,79 @@
+{
+  "name": "@my-app/product-service",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "node dist/apps/product-service/main.js"
+  },
+  "nx": {
+    "name": "product-service",
+    "sourceRoot": "apps/product-service/src",
+    "projectType": "application",
+    "targets": {
+      "serve": {
+        "executor": "@nx/js:node",
+        "defaultConfiguration": "development",
+        "dependsOn": ["build"],
+        "options": {
+      "buildTarget": "product-service:build",
+          "runBuildTargetDependencies": false,
+          "inspect": false
+        },
+        "configurations": {
+          "development": {
+            "buildTarget": "product-service:build:development"
+          },
+          "production": {
+            "buildTarget": "product-service:build:production"
+          }
+        }
+      },
+      "build": {
+        "executor": "@nx/esbuild:esbuild",
+        "outputs": ["{options.outputPath}"],
+        "options": {
+          "outputPath": "dist/apps/product-service",
+          "main": "apps/product-service/src/main.ts",
+          "tsConfig": "apps/product-service/tsconfig.app.json",
+          "assets": [
+            "apps/product-service/src/assets",
+            {
+              "input": "apps/product-service/src",
+              "glob": "swagger-output.json",
+              "output": "./src"
+            }
+          ],
+          "esbuildOptions": {
+            "sourcemap": true,
+            "outExtension": { ".js": ".js" },
+            "external": ["@prisma/client", ".prisma/client"]
+          },
+          "format": ["cjs"],
+          "platform": "node",
+          "bundle": true
+        },
+        "dependsOn": [
+          {
+            "target": "prisma-generate",
+            "projects": "self"
+          }
+        ]
+      },
+      "prisma-generate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "prisma generate --schema=../../prisma/schema.prisma",
+          "cwd": "apps/product-service"
+        }
+      },
+      "test": {
+        "options": {
+          "passWithNoTests": true
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

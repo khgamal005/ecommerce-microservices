@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import proxy from 'express-http-proxy';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import initializeSiteConfig from './libs/initializeSiteConfig';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -60,11 +61,21 @@ app.get('/gateway-health', (req, res) => {
 //   })
 // );
 app.use('/',proxy('http://localhost:6001'))
+app.use('/product',proxy('http://localhost:6002'))
 
 // Start server
 const host = process.env.HOST ?? 'localhost';
 const port = Number(process.env.GATEWAY_PORT) || 8080;
 
-app.listen(port, host, () =>
+
+const server =app.listen(port, host, () => {
   console.log(`[ ready ] http://${host}:${port}/api`)
-);
+  try {
+    initializeSiteConfig();
+    console.log(`[ site config initialized successfully ]`);
+  }
+  catch (error) {
+    console.error('Error creating site config:', error);
+  }
+});
+server.on('error',console.error);

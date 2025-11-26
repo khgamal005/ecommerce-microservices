@@ -2,18 +2,32 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "jsx": "preserve",
-    "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true
   },
   "files": [],
   "references": [
-    { "path": "./apps/auth-service-e2e" },
-    { "path": "./apps/auth-service" },
-    { "path": "./apps/api-gateway" },
-    { "path": "./apps/user-ui" },
-    { "path": "./apps/seller-ui" }
+    {
+      "path": "./apps/auth-service-e2e"
+    },
+    {
+      "path": "./apps/auth-service"
+    },
+    {
+      "path": "./apps/api-gateway"
+    },
+    {
+      "path": "./apps/user-ui"
+    },
+    {
+      "path": "./apps/seller-ui"
+    },
+    {
+      "path": "./apps/product-service"
+    }
   ]
 }

@@ -7,7 +7,7 @@ import ImagePlaceholder from 'apps/seller-ui/src/shared/components/image-placeho
 import Input from 'packages/components/input';
 import ColorSelector from 'packages/components/color-selector';
 import CustomSpecifications from 'packages/components/custom-spacification';
-import CustomProperties from 'packages/components/custom-properties';
+// import CustomProperties from 'packages/components/custom-properties';
 
 interface ProductFormData {
   name: string;
@@ -22,6 +22,8 @@ interface ProductFormData {
   images: (File | null)[];
   colors: string[];
   specifications: { key: string; value: string }[];
+  customProperties: { label: string; values: string[] }[];
+  cashOnDelivery: string;
 }
 
 export default function Page() {
@@ -316,12 +318,38 @@ export default function Page() {
                 error={errors.specifications?.message as string}
               />
             </div>
-                        {/* properties  */}
 
             <div>
-              <CustomProperties
+              {/* <CustomProperties
                 control={control}
-              />
+                error={errors.customProperties?.message}
+              /> */}
+            </div>
+            {/* cash on delivery  */}
+            <div className="mt-2">
+              <label className="block font-semibold mb-1 text-gray-300">
+                Cash on Delivery *
+              </label>
+
+              <select
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md 
+    text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                {...register('cashOnDelivery', { required: true })}
+                defaultValue="yes"
+              >
+                <option value="yes" className="bg-black">
+                  Yes
+                </option>
+                <option value="no" className="bg-black">
+                  No
+                </option>
+              </select>
+
+              {errors.cashOnDelivery && (
+                <span className="text-red-500">
+                  Cash on Delivery is required
+                </span>
+              )}
             </div>
 
             {/* Submit Button */}
