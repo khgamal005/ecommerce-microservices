@@ -19,7 +19,7 @@ const initializeSiteConfig = async () => {
                 subCategory: {
                     "Electronics": ["mobile", "tablet", "camera", "laptop", "tv", "gaming", "audio", "accessories"],
                     "fashion": ["women", "men", "kids", "beauty", "home", "accessories"],
-                    "home&kitchen": ["kitchen", "dining", "bedroom", "living", "kitchen", "bathroom"],
+                    "home&kitchen": ["dining", "bedroom", "living", "kitchen", "bathroom"],
                     "sports": ["cricket", "football", "basketball", "tennis", "gym", "boxing"],
                     "grocery": ["fruits", "vegetables", "dairy", "meat", "bakery", "snacks"],
                 }

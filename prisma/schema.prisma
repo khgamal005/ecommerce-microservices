@@ -109,3 +109,15 @@ model site_config{
     subCategory Json
 
 }
+
+
+model discount_codes {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  public_name   String   
+  discount_type String
+  discount_value Float
+  discount_code String   @unique
+  sellerId    String  @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
