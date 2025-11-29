@@ -1,27 +1,117 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "product Service API",
+    "title": "Product Service API",
     "version": "1.0.0",
-    "description": "API documentation for product Service"
+    "description": "API documentation for Product Service"
   },
   "host": "localhost:6002",
   "basePath": "/api",
-  "schemes": [
-    "http"
-  ],
+  "schemes": ["http"],
   "paths": {
     "/get-categories": {
       "get": {
         "description": "",
         "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          }
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" }
         }
+      }
+    },
+    "/create-discount-code/": {
+      "post": {
+        "tags": ["Discount Codes"],
+        "summary": "Create a new discount code",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/DiscountCodeInput" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Discount code created successfully",
+            "schema": { "$ref": "#/definitions/DiscountCodeResponse" }
+          },
+          "400": { "description": "Validation error" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/get-discount-codes/{sellerId}": {
+      "get": {
+        "tags": ["Discount Codes"],
+        "summary": "Get all discount codes for a seller",
+        "parameters": [
+          {
+            "name": "sellerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of discount codes",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/DiscountCode" }
+            }
+          },
+          "404": { "description": "Seller not found" }
+        }
+      }
+    },
+    "/delete-discount-code/{id}": {
+      "delete": {
+        "tags": ["Discount Codes"],
+        "summary": "Delete a discount code",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Discount code deleted" },
+          "404": { "description": "Discount code not found" },
+          "403": { "description": "Unauthorized" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "DiscountCodeInput": {
+      "type": "object",
+      "required": ["public_name", "discount_type", "discount_value", "discount_code"],
+      "properties": {
+        "public_name": { "type": "string" },
+        "discount_type": { "type": "string", "enum": ["percentage", "fixed"] },
+        "discount_value": { "type": "number" },
+        "discount_code": { "type": "string" }
+      }
+    },
+    "DiscountCode": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "public_name": { "type": "string" },
+        "discount_type": { "type": "string" },
+        "discount_value": { "type": "number" },
+        "discount_code": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "DiscountCodeResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean" },
+        "newDiscount": { "$ref": "#/definitions/DiscountCode" }
       }
     }
   }

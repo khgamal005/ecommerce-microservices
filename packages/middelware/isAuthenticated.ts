@@ -1,7 +1,7 @@
-import prisma from '@packages/libs/prisma';
 import { sellers, users } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import prisma from '../libs/prisma';
 
 interface AuthRequest extends Request {
   seller?: sellers;
@@ -15,20 +15,25 @@ export const isAuthenticated = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const token =
-      req.cookies['accessToken'] ||
-      req.cookies['refreshToken'] ||
-      req.headers.authorization?.split(' ')[1];
+    
+    const accessToken = req.cookies?.accessToken;
+
+
+    const token = accessToken;
 
     if (!token) {
+      console.log('❌ No access token found');
       res.status(401).json({ message: 'Unauthorized: No token provided' });
       return;
     }
 
+    // FIX: Verify with correct secret
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as {
       id: string;
       role: 'seller' | 'user';
     };
+
+    console.log('🔍 Decoded token:', decoded);
 
     if (!decoded || !decoded.id) {
       res.status(401).json({ message: 'Unauthorized: Invalid token payload' });
@@ -65,8 +70,24 @@ export const isAuthenticated = async (
       return;
     }
 
+    console.log('✅ Authentication successful for:', account.email);
     next();
-  } catch (err) {
-    res.status(401).json({ message: 'Unauthorized: Invalid or expired token' });
+  } catch (err: any) {
+    console.error('❌ Auth error:', err.message);
+    
+    if (err.name === 'TokenExpiredError') {
+      res.status(401).json({ 
+        message: 'Access token expired',
+        shouldRefresh: true 
+      });
+      return;
+    }
+    
+    if (err.name === 'JsonWebTokenError') {
+      res.status(401).json({ message: 'Unauthorized: Invalid token' });
+      return;
+    }
+    
+    res.status(401).json({ message: 'Unauthorized: Authentication failed' });
   }
 };

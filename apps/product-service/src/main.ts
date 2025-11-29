@@ -41,7 +41,6 @@ console.log('✅ swagger-service loaded successfully.');
 // =======================
 // 🏠 Root & Error Middleware
 // =======================
-app.get('/', (_, res) => res.send({ message: 'Hello API' }));
 app.use(errorMiddleware);
 
 // =======================

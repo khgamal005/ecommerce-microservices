@@ -3,10 +3,11 @@ import prisma from '../../../../packages/libs/prisma';
 import { NextFunction, Request, Response } from 'express';
 
 export const getCategories = async (
-  req: Request,
+  req: any,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+
   try {
     const config = await prisma.site_config.findFirst();
     if (!config) {
@@ -35,8 +36,8 @@ export const createDiscountCode = async (
       discount_type,
       discount_value,
       discount_code,
-      sellerId,
     } = req.body;
+
 
     const isDiscountCodeExist = await prisma.discount_codes.findUnique({
       where: { discount_code },
@@ -67,12 +68,12 @@ export const createDiscountCode = async (
 
 // Get all discount codes for a seller
 export const getDiscountCodes = async (
-  req: Request,
+  req: any,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { sellerId } = req.params;
+    const { sellerId } = req.seller.id;
 
     const codes = await prisma.discount_codes.findMany({
       where: { sellerId },
@@ -86,23 +87,7 @@ export const getDiscountCodes = async (
 };
 
 
-// Update discount code
-export const updateDiscountCode = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { public_name, discount_type, discount_value, discount_code } =
-      req.body;
 
-    const updated = await prisma.discount_codes.update({
-      where: { id },
-      data: { public_name, discount_type, discount_value, discount_code },
-    });
-
-    res.json(updated);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
 
 // Delete discount code
 
@@ -114,7 +99,7 @@ export const deleteDiscountCode = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const sellerId = (req as any).seller.id; // assuming seller info is added to req
+    const sellerId = (req as any).seller.id; 
 
     // Find the discount code
     const discountCode = await prisma.discount_codes.findUnique({

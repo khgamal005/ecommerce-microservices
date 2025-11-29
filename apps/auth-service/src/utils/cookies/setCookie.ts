@@ -19,7 +19,7 @@ export const setAuthCookies = (
     httpOnly: true,
     sameSite: "lax" as const,
     secure: isProduction,
-    domain: isProduction ? ".yourdomain.com" : "localhost",
+    // domain: isProduction ? ".yourdomain.com" : "localhost",
     path: "/",
   };
 
@@ -48,7 +48,7 @@ export const clearAuthCookies = (res: Response): void => {
     httpOnly: true,
     sameSite: "lax" as const,
     secure: isProduction,
-    domain: isProduction ? ".yourdomain.com" : "localhost",
+    // domain: isProduction ? ".yourdomain.com" : "localhost",
     path: "/",
     maxAge: 0, // Expire immediately
   };

@@ -658,7 +658,9 @@ export const loginSeller = async (
 
 export const getSeller = (req: any, res: Response, next: NextFunction) => {
   try {
-    const seller = req.seller; // ✅ get current user
+    const seller = req.seller; 
+            console.log('seller:', req.seller);
+
     res.json({
       message: 'seller profile fetched successfully',
       success: true,

@@ -1,8 +1,8 @@
-import { AuthError } from '@packages/error-handler';
 import { Request, Response, NextFunction } from 'express';
 
 
 import "express";
+import { AuthError } from '../error-handler';
 
 declare module "express-serve-static-core" {
   interface Request {

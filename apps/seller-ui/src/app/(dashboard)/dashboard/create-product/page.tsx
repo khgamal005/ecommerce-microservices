@@ -56,7 +56,6 @@ export default function Page() {
     defaultValues: {
       name: '',
       description: '',
-      price: 0,
       category: '',
       subCategory: '',
       video_Url: '',
@@ -96,7 +95,7 @@ export default function Page() {
   const subcategoriesData = data?.subcategories || {};
 
   const selectedCategory = watch('category');
-  const regularPrices = watch('price');
+  const regularPrices = watch('regular_price');
 
   const subcategories = useMemo(() => {
     return selectedCategory ? subcategoriesData[selectedCategory] || [] : [];

@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // ✅ useRouter import for App Router
-import toast, { Toaster } from 'react-hot-toast';
+import { useRouter } from 'next/navigation'; 
+import toast from 'react-hot-toast';
 
 import { Eye, EyeOff , Loader2  } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
@@ -68,7 +68,6 @@ const onSubmit = (data: LoginInputs) => {
 
   return (
     <>
-      <Toaster /> 
       <div className="w-full p-y">
         <form
           onSubmit={handleSubmit(onSubmit)}
