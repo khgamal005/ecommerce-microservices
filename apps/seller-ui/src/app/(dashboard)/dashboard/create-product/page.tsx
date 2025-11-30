@@ -13,6 +13,10 @@ import RichTextEditor from 'packages/components/rich-text-editor';
 import SizeSelector from 'packages/components/size-selector';
 // import CustomProperties from 'packages/components/custom-properties';
 
+interface uploadImage{
+  fileId:string;
+  file_Url:string;
+}
 interface ProductFormData {
   name: string;
   description: string;
@@ -29,11 +33,12 @@ interface ProductFormData {
   tags: string;
   slug: string;
   warranty: number | string | null;
-  images: (File | null)[];
+  images: (uploadImage | null)[];
   colors: string[];
   specifications: { key: string; value: string }[];
   customProperties: { label: string; values: string[] }[];
   cashOnDelivery: string;
+  discount_code?: string[];
 }
 
 export default function Page() {
@@ -41,7 +46,7 @@ export default function Page() {
   const [submitMessage, setSubmitMessage] = useState('');
   const [openImageModel, setOpenImageModel] = useState(false);
   const [isChange, setIsChange] = useState(false);
-  const [images, setImages] = useState<(File | null)[]>([null]);
+  const [images, setImages] = useState<( uploadImage | null)[]>([null]);
   const [isChanged, setIsChanged] = useState(true);
 
   const {
@@ -72,6 +77,8 @@ export default function Page() {
       images: [null],
       colors: [],
       specifications: [],
+      customProperties: [],
+      discount_code: [],
     },
   });
 
@@ -81,7 +88,6 @@ export default function Page() {
       try {
         const res = await axiosInstance.get('product/api/get-categories');
         const data = await res.data;
-        console.log(data);
         return data;
       } catch (err) {
         console.error('Error fetching categories:', err);
@@ -90,6 +96,22 @@ export default function Page() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
   });
+
+  const { data: disccountCodeData, isLoading: isDiscountCodeLoading } =
+    useQuery({
+      queryKey: ['shop-discounts'],
+      queryFn: async () => {
+        try {
+          const res = await axiosInstance.get('product/api/get-discount-codes');
+          const data = await res.data;
+          return data;
+        } catch (err) {
+          console.error('Error fetching categories:', err);
+        }
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
+    });
 
   const Categories = data?.categories || [];
   const subcategoriesData = data?.subcategories || {};
@@ -101,37 +123,54 @@ export default function Page() {
     return selectedCategory ? subcategoriesData[selectedCategory] || [] : [];
   }, [selectedCategory, subcategoriesData]);
 
-  const handleImageChange = (file: File, index: number) => {
-    setImages((prev) => {
-      const updated = [...prev];
-      updated[index] = file;
-
-      if (index === prev.length - 1 && prev.length < 8) {
-        updated.push(null);
-      }
-
-      setValue('images', updated);
-      return updated;
+  function convertFileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = reject;
     });
+  }
+
+  const handleImageChange = async (file: File | null, index: number) => {
+    if (!file) return;
+    try {
+      const fileName = await convertFileToBase64(file);
+      const response = await axiosInstance.post('product/api/upload-image', {
+        fileName,
+      });
+      const uploadImage : uploadImage={
+        fileId: response.data.fileId,
+        file_Url: response.data.file_Url
+      }
+            const updateImages = [...images];
+
+      updateImages[index] = uploadImage;
+      if (index === images.length - 1 && images.length < 8) {
+        updateImages.push(null);
+      }
+      setImages(updateImages);
+      setValue('images', updateImages);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const handleRemoveImage = (index: number) => {
-    setImages((prev) => {
-      let updated = [...prev];
-
-      if (index === 0) {
-        updated[0] = null;
-      } else {
-        updated.splice(index, 1);
+    try {
+      const updatedImages = [...images];
+      const imageToDelete = updatedImages[index];
+      if (!imageToDelete && typeof imageToDelete !== 'string') {
       }
-
-      if (!updated.includes(null) && updated.length < 8) {
-        updated.push(null);
+      updatedImages.splice(index, 1);
+      if (!updatedImages.includes(null) && updatedImages.length > 8) {
+        updatedImages.push(null);
       }
-
-      setValue('images', updated);
-      return updated;
-    });
+      setImages(updatedImages);
+      setValue('images', updatedImages);
+    } catch (error) {}
   };
 
   const HandelSaveDraft = () => {
@@ -289,15 +328,18 @@ export default function Page() {
                 )}
               </div>
 
-              {/* Description */}
               <Controller
                 name="description"
                 control={control}
                 rules={{
                   required: 'Description is required',
                   validate: (value) => {
-                    const plainText = value.replace(/<[^>]+>/g, ' ').trim();
-                    const wordCount = plainText.split(/\s+/).length;
+                    const plainText = (value || '')
+                      .replace(/<[^>]+>/g, ' ')
+                      .trim();
+                    const wordCount = plainText
+                      ? plainText.split(/\s+/).length
+                      : 0;
                     return (
                       wordCount >= 10 || 'Description must be at least 10 words'
                     );
@@ -305,7 +347,7 @@ export default function Page() {
                 }}
                 render={({ field }) => (
                   <RichTextEditor
-                    value={field.value}
+                    value={field.value || ''}
                     onChange={field.onChange}
                   />
                 )}
@@ -519,6 +561,51 @@ export default function Page() {
               )}
             </div>
 
+            {/* Select discount code */}
+
+            {/* Select discount code */}
+            <div>
+              <label
+                htmlFor="discount_code"
+                className="block font-semibold mb-1 text-gray-300"
+              >
+                Discount Code (optional)
+              </label>
+
+              {isDiscountCodeLoading ? (
+                <p>Loading discount codes...</p>
+              ) : (
+                <div className="">
+                  {disccountCodeData?.map((code: any) => (
+                    <div key={code.id} className="flex items-center mb-2">
+                      <button
+                        type="button"
+                        className={`px-4 py-2 rounded-md mr-2 ${
+                          watch('discount_code')?.includes(code.id)
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-700 text-white hover:bg-gray-600'
+                        }`}
+                        onClick={() => {
+                          const currentSelection = watch('discount_code') || [];
+                          const UpdateSelection = currentSelection.includes(
+                            code.id
+                          )
+                            ? currentSelection.filter(
+                                (id: string) => id !== code.id
+                              )
+                            : [...currentSelection, code.id];
+                          setValue('discount_code', UpdateSelection);
+                        }}
+                      >
+                        {code?.public_name} ({code?.discount_value}
+                        {code?.discount_type === 'percentage' ? '%' : ' EGP'})
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Submit Buttons */}
             <div className="flex justify-end pt-4 gap-4">
               {/* Save Draft */}
@@ -568,7 +655,7 @@ export default function Page() {
                 {images[0] && (
                   <div className="relative">
                     <img
-                      src={URL.createObjectURL(images[0])}
+                      src={images[0]?.file_Url || ''}
                       alt="Main product"
                       className="w-full h-64 object-cover rounded-lg"
                     />
@@ -599,7 +686,7 @@ export default function Page() {
                     {image && (
                       <>
                         <img
-                          src={URL.createObjectURL(image)}
+                          src={image.file_Url || ''}
                           alt={`Thumbnail ${index + 1}`}
                           className="w-full h-20 object-cover rounded-md"
                         />
@@ -619,7 +706,7 @@ export default function Page() {
                       index={index + 1}
                       onImageChange={handleImageChange}
                       onRemoveImage={handleRemoveImage}
-                      defaultImage={image ? URL.createObjectURL(image) : null}
+                      defaultImage={image ? image.file_Url : null}
                     />
                   </div>
                 ))}

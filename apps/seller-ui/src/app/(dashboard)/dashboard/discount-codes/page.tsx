@@ -228,7 +228,7 @@ const DiscountPage: React.FC = () => {
             <div>
               <label htmlFor="discount_value" className="block text-sm font-medium text-gray-700 mb-1">
                 Discount Value *
-                {watchDiscountType === 'percentage' ? ' (%)' : ' ($)'}
+                {watchDiscountType === 'percentage' ? ' (%)' : ' (EGP)'}
               </label>
               <input
                 type="number"
@@ -305,7 +305,7 @@ const DiscountPage: React.FC = () => {
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {discount.discount_type === 'percentage'
                           ? `${discount.discount_value}%`
-                          : `$${discount.discount_value}`}
+                          : `EGP${discount.discount_value}`}
                       </span>
                     </div>
                   </div>

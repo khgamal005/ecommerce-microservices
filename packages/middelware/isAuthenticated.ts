@@ -6,7 +6,7 @@ import prisma from '../libs/prisma';
 interface AuthRequest extends Request {
   seller?: sellers;
   user?: users;
-  role?: "seller" | "admin" | "user";
+  role?: 'seller' | 'admin' | 'user';
 }
 
 export const isAuthenticated = async (
@@ -15,9 +15,7 @@ export const isAuthenticated = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    
     const accessToken = req.cookies?.accessToken;
-
 
     const token = accessToken;
 
@@ -33,7 +31,7 @@ export const isAuthenticated = async (
       role: 'seller' | 'user';
     };
 
-    console.log('🔍 Decoded token:', decoded);
+    // console.log('🔍 Decoded token:', decoded);
 
     if (!decoded || !decoded.id) {
       res.status(401).json({ message: 'Unauthorized: Invalid token payload' });
@@ -70,24 +68,23 @@ export const isAuthenticated = async (
       return;
     }
 
-    console.log('✅ Authentication successful for:', account.email);
     next();
   } catch (err: any) {
     console.error('❌ Auth error:', err.message);
-    
+
     if (err.name === 'TokenExpiredError') {
-      res.status(401).json({ 
+      res.status(401).json({
         message: 'Access token expired',
-        shouldRefresh: true 
+        shouldRefresh: true,
       });
       return;
     }
-    
+
     if (err.name === 'JsonWebTokenError') {
       res.status(401).json({ message: 'Unauthorized: Invalid token' });
       return;
     }
-    
+
     res.status(401).json({ message: 'Unauthorized: Authentication failed' });
   }
 };
