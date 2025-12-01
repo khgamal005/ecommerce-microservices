@@ -10,11 +10,8 @@ router.post("/create-discount-code/", isAuthenticated, createDiscountCode);
 router.get("/get-discount-codes", isAuthenticated, getDiscountCodes);
 router.delete("/delete-discount-code/:id", isAuthenticated, deleteDiscountCode);
 
-router.post('/upload-image', uploadProductImage);
+router.post('/upload-image',isAuthenticated, uploadProductImage);
 
-// Delete product image by fileId
-router.post('/delete-image', isAuthenticated, deleteProductImage);
-
-
+router.post('/delete-image', deleteProductImage);
 
 export default router;

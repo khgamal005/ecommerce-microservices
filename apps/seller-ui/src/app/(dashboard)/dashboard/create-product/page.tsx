@@ -3,7 +3,6 @@
 import { Controller, useForm } from 'react-hook-form';
 import { useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-import ImagePlaceholder from 'apps/seller-ui/src/shared/components/image-placeholder';
 import Input from 'packages/components/input';
 import ColorSelector from 'packages/components/color-selector';
 import CustomSpecifications from 'packages/components/custom-spacification';
@@ -11,12 +10,20 @@ import { useQuery } from '@tanstack/react-query';
 import axiosInstance from 'apps/seller-ui/src/utils/axiosInstance';
 import RichTextEditor from 'packages/components/rich-text-editor';
 import SizeSelector from 'packages/components/size-selector';
-// import CustomProperties from 'packages/components/custom-properties';
+import { useImageManagement } from 'apps/seller-ui/src/hook/useImageManagement';
+import {
+  ImageModal,
+  ImageUploadInfo,
+  MainImagePreview,
+  ThumbnailGrid,
+} from 'apps/seller-ui/src/shared/components/ImageModal';
+import ImagePlaceholder from 'apps/seller-ui/src/shared/components/image-placeholder';
 
-interface uploadImage{
-  fileId:string;
-  file_Url:string;
+interface UploadImage {
+  fileId: string;
+  file_Url: string;
 }
+
 interface ProductFormData {
   name: string;
   description: string;
@@ -33,7 +40,7 @@ interface ProductFormData {
   tags: string;
   slug: string;
   warranty: number | string | null;
-  images: (uploadImage | null)[];
+  images: (UploadImage | null)[];
   colors: string[];
   specifications: { key: string; value: string }[];
   customProperties: { label: string; values: string[] }[];
@@ -44,9 +51,6 @@ interface ProductFormData {
 export default function Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
-  const [openImageModel, setOpenImageModel] = useState(false);
-  const [isChange, setIsChange] = useState(false);
-  const [images, setImages] = useState<( uploadImage | null)[]>([null]);
   const [isChanged, setIsChanged] = useState(true);
 
   const {
@@ -82,18 +86,32 @@ export default function Page() {
     },
   });
 
+  const {
+    images,
+    selectedImage,
+    openImageModel,
+    setOpenImageModel,
+    setSelectedImage,
+    handleImageChange,
+    handleRemoveImage,
+    handleEditImage,
+    getValidImages,
+    isUploading,
+    MAX_IMAGES,
+  } = useImageManagement([]);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       try {
         const res = await axiosInstance.get('product/api/get-categories');
-        const data = await res.data;
-        return data;
+        return res.data;
       } catch (err) {
         console.error('Error fetching categories:', err);
+        throw err;
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 2,
   });
 
@@ -103,13 +121,13 @@ export default function Page() {
       queryFn: async () => {
         try {
           const res = await axiosInstance.get('product/api/get-discount-codes');
-          const data = await res.data;
-          return data;
+          return res.data;
         } catch (err) {
-          console.error('Error fetching categories:', err);
+          console.error('Error fetching discount codes:', err);
+          throw err;
         }
       },
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
       retry: 2,
     });
 
@@ -117,81 +135,90 @@ export default function Page() {
   const subcategoriesData = data?.subcategories || {};
 
   const selectedCategory = watch('category');
-  const regularPrices = watch('regular_price');
+  const regularPrice = watch('regular_price');
+  const salePrice = watch('sale_price');
 
   const subcategories = useMemo(() => {
     return selectedCategory ? subcategoriesData[selectedCategory] || [] : [];
   }, [selectedCategory, subcategoriesData]);
 
-  function convertFileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        resolve(reader.result as string);
-      };
-      reader.onerror = reject;
-    });
-  }
-
-  const handleImageChange = async (file: File | null, index: number) => {
-    if (!file) return;
-    try {
-      const fileName = await convertFileToBase64(file);
-      const response = await axiosInstance.post('product/api/upload-image', {
-        fileName,
-      });
-      const uploadImage : uploadImage={
-        fileId: response.data.fileId,
-        file_Url: response.data.file_Url
-      }
-            const updateImages = [...images];
-
-      updateImages[index] = uploadImage;
-      if (index === images.length - 1 && images.length < 8) {
-        updateImages.push(null);
-      }
-      setImages(updateImages);
-      setValue('images', updateImages);
-    } catch (err) {
-      console.log(err);
-    }
+  const handleSaveDraft = () => {
+    setIsChanged(false);
+    // Implement save draft logic here
+    console.log('Save draft functionality');
   };
 
-  const handleRemoveImage = (index: number) => {
-    try {
-      const updatedImages = [...images];
-      const imageToDelete = updatedImages[index];
-      if (!imageToDelete && typeof imageToDelete !== 'string') {
-      }
-      updatedImages.splice(index, 1);
-      if (!updatedImages.includes(null) && updatedImages.length > 8) {
-        updatedImages.push(null);
-      }
-      setImages(updatedImages);
-      setValue('images', updatedImages);
-    } catch (error) {}
-  };
-
-  const HandelSaveDraft = () => {
-    setIsChange(false);
-  };
-
+  // In your main component, update the onSubmit and error handling
   const onSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true);
     setSubmitMessage('');
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setSubmitMessage('Product created successfully!');
-      reset();
-      setImages([null]);
-    } catch (error) {
-      setSubmitMessage('Error creating product. Please try again.');
+      // Validate images
+      const validImages = getValidImages();
+
+      if (validImages.length === 0) {
+        throw new Error('At least one product image is required');
+      }
+
+      // Prepare product data
+      const productData = {
+        ...data,
+        images: validImages,
+        mainImage: validImages[0]?.file_Url,
+        thumbnailImages: validImages.slice(1).map((img) => img.file_Url),
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // API call to create product
+      const response = await axiosInstance.post(
+        '/product/api/create',
+        productData
+      );
+
+      if (response.data.success) {
+        setSubmitMessage('🎉 Product created successfully!');
+
+        // Reset form after success
+        setTimeout(() => {
+          reset();
+        }, 2000);
+      } else {
+        throw new Error(response.data.message || 'Failed to create product');
+      }
+    } catch (error: any) {
+      console.error('Error creating product:', error);
+
+      if (error.response?.data?.error) {
+        setSubmitMessage(`Error: ${error.response.data.error}`);
+      } else if (error.message) {
+        setSubmitMessage(error.message);
+      } else {
+        setSubmitMessage('Error creating product. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Add error handling for image operations in your JSX
+  {
+    submitMessage && (
+      <div
+        className={`p-3 rounded-md ${
+          submitMessage.includes('Error') ||
+          submitMessage.includes('error') ||
+          submitMessage.includes('failed')
+            ? 'bg-red-100 text-red-700 border border-red-300'
+            : 'bg-green-100 text-green-700 border border-green-300'
+        }`}
+      >
+        {submitMessage}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -221,10 +248,12 @@ export default function Page() {
                   type="text"
                   label="Product Name"
                   placeholder="Product Name"
-                  {...register('name', { required: true })}
+                  {...register('name', {
+                    required: 'Product name is required',
+                  })}
                 />
                 {errors.name && (
-                  <span className="text-red-500">Product name is required</span>
+                  <span className="text-red-500">{errors.name.message}</span>
                 )}
               </div>
 
@@ -240,10 +269,6 @@ export default function Page() {
                       value: 2,
                       message: 'Brand must be at least 2 characters',
                     },
-                    maxLength: {
-                      value: 50,
-                      message: 'Brand must be less than 50 characters',
-                    },
                   })}
                 />
                 {errors.brand && (
@@ -254,7 +279,7 @@ export default function Page() {
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Category
+                  Category *
                 </label>
                 {isLoading ? (
                   <p>Loading categories...</p>
@@ -290,37 +315,31 @@ export default function Page() {
               {/* SubCategory */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  SubCategory
+                  SubCategory *
                 </label>
-                {isLoading ? (
-                  <p>Loading categories...</p>
-                ) : isError ? (
-                  <p className="text-red-500">Error loading categories</p>
-                ) : (
-                  <Controller
-                    name="subCategory"
-                    control={control}
-                    rules={{ required: 'subcategory is required' }}
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        disabled={!selectedCategory}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                      >
-                        <option value="">
-                          {!selectedCategory
-                            ? 'Select category first'
-                            : 'Select subCategory'}
+                <Controller
+                  name="subCategory"
+                  control={control}
+                  rules={{ required: 'Subcategory is required' }}
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      disabled={!selectedCategory}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                    >
+                      <option value="">
+                        {!selectedCategory
+                          ? 'Select category first'
+                          : 'Select subCategory'}
+                      </option>
+                      {subcategories.map((sub: string) => (
+                        <option key={sub} value={sub}>
+                          {sub}
                         </option>
-                        {subcategories.map((sub: string) => (
-                          <option key={sub} value={sub}>
-                            {sub}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  />
-                )}
+                      ))}
+                    </select>
+                  )}
+                />
                 {errors.subCategory && (
                   <span className="text-red-500">
                     {errors.subCategory.message}
@@ -328,40 +347,44 @@ export default function Page() {
                 )}
               </div>
 
-              <Controller
-                name="description"
-                control={control}
-                rules={{
-                  required: 'Description is required',
-                  validate: (value) => {
-                    const plainText = (value || '')
-                      .replace(/<[^>]+>/g, ' ')
-                      .trim();
-                    const wordCount = plainText
-                      ? plainText.split(/\s+/).length
-                      : 0;
-                    return (
-                      wordCount >= 10 || 'Description must be at least 10 words'
-                    );
-                  },
-                }}
-                render={({ field }) => (
-                  <RichTextEditor
-                    value={field.value || ''}
-                    onChange={field.onChange}
-                  />
+              {/* Description */}
+              <div className="md:col-span-2">
+                <Controller
+                  name="description"
+                  control={control}
+                  rules={{
+                    required: 'Description is required',
+                    validate: (value) => {
+                      const plainText = (value || '')
+                        .replace(/<[^>]+>/g, ' ')
+                        .trim();
+                      const wordCount = plainText
+                        ? plainText.split(/\s+/).length
+                        : 0;
+                      return (
+                        wordCount >= 10 ||
+                        'Description must be at least 10 words'
+                      );
+                    },
+                  }}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                {errors.description && (
+                  <span className="text-red-500">
+                    {errors.description.message}
+                  </span>
                 )}
-              />
-              {errors.description && (
-                <span className="text-red-500">
-                  {errors.description.message}
-                </span>
-              )}
+              </div>
 
               {/* Video URL */}
               <div>
                 <Input
-                  label="Video URL"
+                  label="Video URL (Optional)"
                   placeholder="https://example.com/video"
                   {...register('video_Url', {
                     pattern: {
@@ -391,8 +414,7 @@ export default function Page() {
                       value: 0,
                       message: 'Regular Price must be positive',
                     },
-                    validate: (value) =>
-                      !isNaN(Number(value)) || 'Only numbers are allowed',
+                    valueAsNumber: true,
                   })}
                 />
                 {errors.regular_price && (
@@ -412,14 +434,7 @@ export default function Page() {
                   {...register('sale_price', {
                     required: 'Sale Price is required',
                     min: { value: 0, message: 'Sale Price must be positive' },
-                    validate: (value, formValues) => {
-                      if (isNaN(Number(value)))
-                        return 'Only numbers are allowed';
-                      if (Number(value) >= Number(formValues.regular_price)) {
-                        return 'Sale Price must be less than Regular Price';
-                      }
-                      return true;
-                    },
+                    valueAsNumber: true,
                   })}
                 />
                 {errors.sale_price && (
@@ -437,15 +452,8 @@ export default function Page() {
                   type="number"
                   {...register('stock', {
                     required: 'Stock is required',
-                    min: { value: 1, message: 'Stock cannot be negative' },
-                    max: { value: 10000, message: 'Stock is too large' },
-                    validate: (value) => {
-                      const num = Number(value);
-                      if (isNaN(num)) return 'Only numbers are allowed';
-                      if (!Number.isInteger(num))
-                        return 'Stock must be an integer';
-                      return true;
-                    },
+                    min: { value: 0, message: 'Stock cannot be negative' },
+                    valueAsNumber: true,
                   })}
                 />
                 {errors.stock && (
@@ -458,7 +466,7 @@ export default function Page() {
                 <label className="block font-semibold mb-1 text-gray-300">
                   Sizes
                 </label>
-                <SizeSelector control={control} error={errors} />
+                <SizeSelector control={control} error={errors.sizes?.message} />
               </div>
 
               {/* Slug */}
@@ -469,14 +477,6 @@ export default function Page() {
                   placeholder="product-slug"
                   {...register('slug', {
                     required: 'Slug is required',
-                    minLength: {
-                      value: 3,
-                      message: 'Slug must be at least 3 characters',
-                    },
-                    maxLength: {
-                      value: 50,
-                      message: 'Slug must be less than 50 characters',
-                    },
                     pattern: {
                       value: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
                       message: 'Slug must be lowercase and may contain hyphens',
@@ -495,10 +495,12 @@ export default function Page() {
                 <Input
                   label="Product Tags"
                   placeholder="tag1, tag2, tag3"
-                  {...register('tags', { required: true })}
+                  {...register('tags', {
+                    required: 'Product tags are required',
+                  })}
                 />
                 {errors.tags && (
-                  <span className="text-red-500">Product tags is required</span>
+                  <span className="text-red-500">{errors.tags.message}</span>
                 )}
               </div>
 
@@ -506,11 +508,13 @@ export default function Page() {
                 <Input
                   label="Warranty"
                   placeholder="1 year/no warranty"
-                  {...register('warranty', { required: true })}
+                  {...register('warranty', {
+                    required: 'Warranty information is required',
+                  })}
                 />
                 {errors.warranty && (
                   <span className="text-red-500">
-                    Product warranty is required
+                    {errors.warranty.message}
                   </span>
                 )}
               </div>
@@ -528,14 +532,6 @@ export default function Page() {
                 error={errors.specifications?.message as string}
               />
             </div>
-            {/* CustomProperties */}
-
-            <div>
-              {/* <CustomProperties
-                control={control}
-                error={errors.customProperties?.message}
-              /> */}
-            </div>
 
             {/* Cash on Delivery */}
             <div className="mt-2">
@@ -544,63 +540,53 @@ export default function Page() {
               </label>
               <select
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                {...register('cashOnDelivery', { required: true })}
-                defaultValue="yes"
+                {...register('cashOnDelivery', {
+                  required: 'Cash on Delivery is required',
+                })}
               >
-                <option value="yes" className="bg-black">
-                  Yes
-                </option>
-                <option value="no" className="bg-black">
-                  No
-                </option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
               </select>
               {errors.cashOnDelivery && (
                 <span className="text-red-500">
-                  Cash on Delivery is required
+                  {errors.cashOnDelivery.message}
                 </span>
               )}
             </div>
 
-            {/* Select discount code */}
-
-            {/* Select discount code */}
+            {/* Discount Codes */}
             <div>
-              <label
-                htmlFor="discount_code"
-                className="block font-semibold mb-1 text-gray-300"
-              >
+              <label className="block font-semibold mb-1 text-gray-300">
                 Discount Code (optional)
               </label>
-
               {isDiscountCodeLoading ? (
                 <p>Loading discount codes...</p>
               ) : (
-                <div className="">
+                <div className="flex flex-wrap gap-2">
                   {disccountCodeData?.map((code: any) => (
-                    <div key={code.id} className="flex items-center mb-2">
-                      <button
-                        type="button"
-                        className={`px-4 py-2 rounded-md mr-2 ${
-                          watch('discount_code')?.includes(code.id)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-700 text-white hover:bg-gray-600'
-                        }`}
-                        onClick={() => {
-                          const currentSelection = watch('discount_code') || [];
-                          const UpdateSelection = currentSelection.includes(
-                            code.id
-                          )
-                            ? currentSelection.filter(
-                                (id: string) => id !== code.id
-                              )
-                            : [...currentSelection, code.id];
-                          setValue('discount_code', UpdateSelection);
-                        }}
-                      >
-                        {code?.public_name} ({code?.discount_value}
-                        {code?.discount_type === 'percentage' ? '%' : ' EGP'})
-                      </button>
-                    </div>
+                    <button
+                      key={code.id}
+                      type="button"
+                      className={`px-4 py-2 rounded-md ${
+                        watch('discount_code')?.includes(code.id)
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-white hover:bg-gray-600'
+                      }`}
+                      onClick={() => {
+                        const currentSelection = watch('discount_code') || [];
+                        const updatedSelection = currentSelection.includes(
+                          code.id
+                        )
+                          ? currentSelection.filter(
+                              (id: string) => id !== code.id
+                            )
+                          : [...currentSelection, code.id];
+                        setValue('discount_code', updatedSelection);
+                      }}
+                    >
+                      {code?.public_name} ({code?.discount_value}
+                      {code?.discount_type === 'percentage' ? '%' : ' EGP'})
+                    </button>
                   ))}
                 </div>
               )}
@@ -608,18 +594,16 @@ export default function Page() {
 
             {/* Submit Buttons */}
             <div className="flex justify-end pt-4 gap-4">
-              {/* Save Draft */}
               {isChanged && (
                 <button
                   type="button"
-                  onClick={HandelSaveDraft}
+                  onClick={handleSaveDraft}
                   className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-md transition-colors duration-200"
                 >
                   Save Draft
                 </button>
               )}
 
-              {/* Create Product */}
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -633,7 +617,8 @@ export default function Page() {
             {submitMessage && (
               <div
                 className={`p-3 rounded-md ${
-                  submitMessage.includes('Error')
+                  submitMessage.includes('Error') ||
+                  submitMessage.includes('error')
                     ? 'bg-red-100 text-red-700'
                     : 'bg-green-100 text-green-700'
                 }`}
@@ -650,74 +635,71 @@ export default function Page() {
                 Image Preview
               </h3>
 
+              {/* Image Modal */}
+              {openImageModel && (
+                <ImageModal
+                  selectedImage={selectedImage}
+                  onClose={() => setOpenImageModel(false)}
+                />
+              )}
+
               {/* Main Image */}
               <div className="mb-4">
-                {images[0] && (
-                  <div className="relative">
-                    <img
-                      src={images[0]?.file_Url || ''}
-                      alt="Main product"
-                      className="w-full h-64 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(0)}
-                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
-                    >
-                      ×
-                    </button>
-                  </div>
-                )}
                 <ImagePlaceholder
                   setOpenImageModel={setOpenImageModel}
                   size="275 * 850"
                   small={false}
+                  images={images}
                   index={0}
                   onImageChange={handleImageChange}
                   onRemoveImage={handleRemoveImage}
-                  defaultImage={null}
+                  setSelectedImage={setSelectedImage}
+                  defaultImage={images[0]?.file_Url || null}
+                  uploading={isUploading(0)} // pass per-image uploading state
                 />
               </div>
 
-              {/* Thumbnail Images Grid */}
+              {/* Thumbnails + Dynamic Placeholders */}
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2">
-                {images.slice(1).map((image, index) => (
-                  <div key={index} className="relative">
-                    {image && (
-                      <>
-                        <img
-                          src={image.file_Url || ''}
-                          alt={`Thumbnail ${index + 1}`}
-                          className="w-full h-20 object-cover rounded-md"
+                {Array.from({ length: MAX_IMAGES - 1 }).map((_, i) => {
+                  const idx = i + 1;
+                  const image = images[idx] || null;
+
+                  return (
+                    <div key={idx} className="relative">
+                      {/* Thumbnail for existing image */}
+                      {image?.file_Url && (
+                        <ThumbnailGrid
+                          images={[image]}
+                          realIndex={idx}
+                          onRemoveImage={handleRemoveImage}
+                          setSelectedImage={setSelectedImage}
+                          setOpenImageModel={setOpenImageModel}
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(index + 1)}
-                          className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                        >
-                          ×
-                        </button>
-                      </>
-                    )}
-                    <ImagePlaceholder
-                      setOpenImageModel={setOpenImageModel}
-                      size="275 * 850"
-                      small={true}
-                      index={index + 1}
-                      onImageChange={handleImageChange}
-                      onRemoveImage={handleRemoveImage}
-                      defaultImage={image ? image.file_Url : null}
-                    />
-                  </div>
-                ))}
+                      )}
+
+                      {/* Placeholder for empty slot */}
+                      {!image?.file_Url && (
+                        <ImagePlaceholder
+                          setOpenImageModel={setOpenImageModel}
+                          size="275 * 850"
+                          small={false}
+                          images={images}
+                          index={0}
+                          onImageChange={handleImageChange}
+                          onRemoveImage={handleRemoveImage}
+                          setSelectedImage={setSelectedImage}
+                          defaultImage={images[0]?.file_Url || null}
+                          uploading={isUploading(0)} // pass per-image uploading state
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Image Upload Info */}
-              <div className="mt-4 text-sm text-gray-400">
-                <p>• Upload up to 8 images</p>
-                <p>• First image will be the main display</p>
-                <p>• Supported formats: JPG, PNG, WebP</p>
-              </div>
+              {/* Upload Info */}
+              <ImageUploadInfo />
             </div>
           </div>
         </div>

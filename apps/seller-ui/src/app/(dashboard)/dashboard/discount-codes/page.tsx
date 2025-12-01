@@ -57,7 +57,6 @@ const discountApi = {
 };
 
 const DiscountPage: React.FC = () => {
-  const sellerId = 'your-seller-id'; // Get from auth context or props
   const queryClient = useQueryClient();
 
   // React Hook Form
@@ -81,9 +80,8 @@ const DiscountPage: React.FC = () => {
     isLoading,
     error: fetchError,
   } = useQuery({
-    queryKey: ['discounts', sellerId],
+    queryKey: ['discounts'],
     queryFn: () => discountApi.getDiscounts(),
-    enabled: !!sellerId,
   });
 
   // React Query for creating discount
@@ -106,7 +104,7 @@ const DiscountPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: discountApi.deleteDiscount,
     onSuccess: (response) => {
-    queryClient.invalidateQueries({ queryKey: ['discounts', sellerId] });
+    queryClient.invalidateQueries({ queryKey: ['discounts'] });
     toast.success(response.message || 'Discount deleted successfully');
   },
   onError: (error: AxiosError<{ message: string }>) => {
