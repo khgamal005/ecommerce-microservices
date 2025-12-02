@@ -11,11 +11,12 @@ export const useImageManagement = (initialImages: UploadImage[] = []) => {
   const [images, setImages] = useState<(UploadImage | null)[]>(initialImages);
   const [selectedImage, setSelectedImage] = useState('');
   const [openImageModel, setOpenImageModel] = useState(false);
-  const [uploadingIndexes, setUploadingIndexes] = useState<number[]>([]); // per-image spinner
+  const [uploadingIndexes, setUploadingIndexes] = useState<number[]>([]); 
   const MAX_IMAGES = 8;
+    {console.log("openImageModel:", openImageModel,selectedImage)}
+
 
   const isUploading = (index: number) => uploadingIndexes.includes(index);
-
 const handleImageChange = async (file: File, index: number) => {
   if (!file) return;
 
@@ -71,15 +72,15 @@ const handleImageChange = async (file: File, index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleEditImage = (index: number) => {
-    const image = images[index];
-    if (image?.file_Url) {
-      setSelectedImage(image.file_Url);
-      setOpenImageModel(true);
-    }
-  };
+const handleEditImage = (index: number) => {
+  const image = images[index];
+  if (!image?.file_Url) return;
+
+  setSelectedImage(image.file_Url);
+  setOpenImageModel(true);}
 
   const getValidImages = () => images.filter(Boolean) as UploadImage[];
+
 
   return {
     images,

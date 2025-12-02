@@ -2,7 +2,7 @@
 
 import { Controller, useForm } from 'react-hook-form';
 import { useMemo, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import Input from 'packages/components/input';
 import ColorSelector from 'packages/components/color-selector';
 import CustomSpecifications from 'packages/components/custom-spacification';
@@ -18,6 +18,7 @@ import {
   ThumbnailGrid,
 } from 'apps/seller-ui/src/shared/components/ImageModal';
 import ImagePlaceholder from 'apps/seller-ui/src/shared/components/image-placeholder';
+import Image from 'next/image';
 
 interface UploadImage {
   fileId: string;
@@ -99,6 +100,7 @@ export default function Page() {
     isUploading,
     MAX_IMAGES,
   } = useImageManagement([]);
+
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['categories'],
@@ -636,6 +638,7 @@ export default function Page() {
               </h3>
 
               {/* Image Modal */}
+    
               {openImageModel && (
                 <ImageModal
                   selectedImage={selectedImage}
@@ -655,15 +658,16 @@ export default function Page() {
                   onRemoveImage={handleRemoveImage}
                   setSelectedImage={setSelectedImage}
                   defaultImage={images[0]?.file_Url || null}
-                  uploading={isUploading(0)} // pass per-image uploading state
+                  openImageModel={openImageModel}
+                  uploading={isUploading(0)}
+                  onEditImage={handleEditImage}
                 />
               </div>
 
               {/* Thumbnails + Dynamic Placeholders */}
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2">
-                {Array.from({ length: MAX_IMAGES - 1 }).map((_, i) => {
-                  const idx = i + 1;
-                  const image = images[idx] || null;
+                {images.slice(1).map((image, index) => {
+                  const idx = index + 1;
 
                   return (
                     <div key={idx} className="relative">
@@ -681,16 +685,19 @@ export default function Page() {
                       {/* Placeholder for empty slot */}
                       {!image?.file_Url && (
                         <ImagePlaceholder
-                          setOpenImageModel={setOpenImageModel}
                           size="275 * 850"
                           small={false}
                           images={images}
-                          index={0}
+                          openImageModel={openImageModel}
+                          setOpenImageModel={setOpenImageModel}
+                          index={idx}
                           onImageChange={handleImageChange}
                           onRemoveImage={handleRemoveImage}
-                          setSelectedImage={setSelectedImage}
                           defaultImage={images[0]?.file_Url || null}
-                          uploading={isUploading(0)} // pass per-image uploading state
+                          uploading={isUploading(idx)}
+                          onEditImage={handleEditImage}
+                          setSelectedImage={setSelectedImage}
+
                         />
                       )}
                     </div>
