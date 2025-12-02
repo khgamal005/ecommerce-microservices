@@ -1,20 +1,17 @@
-import { UploadImage } from "apps/seller-ui/src/hook/useImageManagement";
-import { X, WandSparkles, Pencil } from "lucide-react";
-import Image from "next/image";
-import { useRef, useState, useEffect } from "react";
+import { UploadImage } from 'apps/seller-ui/src/hook/useImageManagement';
+import { X, WandSparkles, Pencil } from 'lucide-react';
+import Image from 'next/image';
+import { useRef, useState, useEffect } from 'react';
 
 interface ImagePlaceholderProps {
   size?: string;
   small?: boolean;
   onImageChange?: (file: File, index: number) => void;
   onRemoveImage?: (index: number) => void;
-  defaultImage?: string | null;
   index: number;
   images: (UploadImage | null)[];
   uploading?: boolean;
-  onEditImage?: (index: number) => void;
   setOpenImageModel?: (open: boolean) => void;
-  setSelectedImage: (image: string) => void;
   openImageModel: boolean;
 }
 
@@ -23,72 +20,57 @@ export default function ImagePlaceholder({
   small,
   onImageChange,
   onRemoveImage,
-  defaultImage = null,
-  index ,
+  index,
   images,
   uploading = false,
-  onEditImage,
   setOpenImageModel,
-  setSelectedImage,
-  openImageModel
 }: ImagePlaceholderProps) {
-  const [imagePreview, setImagePreview] = useState<string | null>(defaultImage);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => setImagePreview(defaultImage), [defaultImage]);
+
 
   const openFilePicker = () => inputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreview(previewUrl);
+
+
+
     onImageChange?.(file, index);
-    setSelectedImage(previewUrl);
   };
 
   const handleRemove = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setImagePreview(null);
     onRemoveImage?.(index);
   };
 
-  // const handleEdit = (e: React.MouseEvent) => {
-  //   e.preventDefault();
-  //   e.stopPropagation();
-
-  //   setOpenImageModel?.(true);
-    
-  //   onEditImage?.(index);
-  //   console.log("openImageModel:", openImageModel);
-  // };
   const handleEdit = (e: React.MouseEvent) => {
-  e.preventDefault();
-  e.stopPropagation();
-    // const image = images[index];
-    // console.log("image in handleEdit:", image) ,index;
-    // if (!image?.file_Url) return;
-
+    e.preventDefault();
+    e.stopPropagation();
+    if (!images[index]?.file_Url) return;
     setOpenImageModel?.(true);
-
-
-  // onEditImage?.(index);
-};
+  };
 
   const handleContainerClick = (e: React.MouseEvent) => {
     if (!hasImage) openFilePicker();
     else e.stopPropagation();
   };
 
-  const hasImage = imagePreview && images[index];
+  const hasImage = Boolean( images[index]?.file_Url);
+
+  // Use ImageKit URL first, fallback to local preview
+  const displaySrc = images[index]?.file_Url || '';
+  console.log('Rendering ImagePlaceholder for index', index, 'with displaySrc:', displaySrc);
 
   return (
     <div
       onClick={handleContainerClick}
-      className={`relative ${small ? "h-20" : "h-64"} w-full bg-black border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center transition-colors ${
-        !hasImage ? "cursor-pointer hover:border-gray-400" : "cursor-default"
+      className={`relative ${
+        small ? 'h-20' : 'h-64'
+      } w-full bg-black border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center transition-colors ${
+        !hasImage ? 'cursor-pointer hover:border-gray-400' : 'cursor-default'
       }`}
     >
       <input
@@ -99,7 +81,6 @@ export default function ImagePlaceholder({
         onChange={handleFileChange}
       />
 
-      {/* Spinner */}
       {uploading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -124,11 +105,11 @@ export default function ImagePlaceholder({
 
           <div className="relative w-full h-full pointer-events-none">
             <Image
-              src={imagePreview}
+              src={displaySrc}
               alt={`Product image ${index + 1}`}
               fill
               className="object-cover rounded-lg"
-              onError={() => setImagePreview(null)}
+              // onError={() => setImagePreview(null)}
             />
           </div>
         </>
@@ -141,15 +122,15 @@ export default function ImagePlaceholder({
               e.stopPropagation();
               openFilePicker();
             }}
-            className="absolute top-2 right-2 z-20 p-1.5 rounded bg-slate-600 hover:bg-slate-500 shadow-lg pointer-events-auto"
+            className="absolute top-2 right-2 p-1.5 rounded bg-slate-600 hover:bg-slate-500 shadow-lg pointer-events-auto"
           >
             <Pencil size={14} className="text-white" />
           </button>
           <div className="text-center p-4">
-            <p className={`text-gray-400 ${small ? "text-sm" : "text-lg"} font-semibold mb-2`}>
+            <p className={`text-gray-400 ${small ? 'text-sm' : 'text-lg'} font-semibold mb-2`}>
               {size}
             </p>
-            <p className={`text-gray-500 ${small ? "text-xs" : "text-sm"}`}>
+            <p className={`text-gray-500 ${small ? 'text-xs' : 'text-sm'}`}>
               Click to upload image
             </p>
             {!small && (

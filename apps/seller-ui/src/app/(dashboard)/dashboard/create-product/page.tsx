@@ -14,11 +14,8 @@ import { useImageManagement } from 'apps/seller-ui/src/hook/useImageManagement';
 import {
   ImageModal,
   ImageUploadInfo,
-  MainImagePreview,
-  ThumbnailGrid,
 } from 'apps/seller-ui/src/shared/components/ImageModal';
 import ImagePlaceholder from 'apps/seller-ui/src/shared/components/image-placeholder';
-import Image from 'next/image';
 
 interface UploadImage {
   fileId: string;
@@ -95,7 +92,7 @@ export default function Page() {
     setSelectedImage,
     handleImageChange,
     handleRemoveImage,
-    handleEditImage,
+    // handleEditImage,
     getValidImages,
     isUploading,
     MAX_IMAGES,
@@ -656,54 +653,33 @@ export default function Page() {
                   index={0}
                   onImageChange={handleImageChange}
                   onRemoveImage={handleRemoveImage}
-                  setSelectedImage={setSelectedImage}
-                  defaultImage={images[0]?.file_Url || null}
                   openImageModel={openImageModel}
                   uploading={isUploading(0)}
-                  onEditImage={handleEditImage}
+                  // onEditImage={handleEditImage}
                 />
               </div>
 
               {/* Thumbnails + Dynamic Placeholders */}
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2">
-                {images.slice(1).map((image, index) => {
-                  const idx = index + 1;
-
-                  return (
-                    <div key={idx} className="relative">
-                      {/* Thumbnail for existing image */}
-                      {image?.file_Url && (
-                        <ThumbnailGrid
-                          images={[image]}
-                          realIndex={idx}
-                          onRemoveImage={handleRemoveImage}
-                          setSelectedImage={setSelectedImage}
-                          setOpenImageModel={setOpenImageModel}
-                        />
-                      )}
-
-                      {/* Placeholder for empty slot */}
-                      {!image?.file_Url && (
-                        <ImagePlaceholder
-                          size="275 * 850"
-                          small={false}
-                          images={images}
-                          openImageModel={openImageModel}
-                          setOpenImageModel={setOpenImageModel}
-                          index={idx}
-                          onImageChange={handleImageChange}
-                          onRemoveImage={handleRemoveImage}
-                          defaultImage={images[0]?.file_Url || null}
-                          uploading={isUploading(idx)}
-                          onEditImage={handleEditImage}
-                          setSelectedImage={setSelectedImage}
-
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+<div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2">
+  {images.slice(1).map((image, index) => {
+    const idx = index + 1;
+    return (
+      <div key={idx} className="relative">
+        <ImagePlaceholder
+          size="275 * 850"
+          small={false}
+          images={images}
+          openImageModel={openImageModel}
+          setOpenImageModel={setOpenImageModel}
+          index={idx}
+          onImageChange={handleImageChange}
+          onRemoveImage={handleRemoveImage}
+          uploading={isUploading(idx)}
+        />
+      </div>
+    );
+  })}
+</div>
 
               {/* Upload Info */}
               <ImageUploadInfo />

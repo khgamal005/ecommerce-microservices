@@ -31,12 +31,7 @@ interface MainImagePreviewProps {
   onEdit: () => void;
 }
 
-interface ThumbnailGridProps {
-  images: (UploadImage | null)[];
-  onRemoveImage: (index: number) => void;
-  setOpenImageModel: (open: boolean) => void;
-  setSelectedImage: (image: string) => void;
-}
+
 
 /* =========================== */
 /*   IMAGE MODAL               */
@@ -137,107 +132,101 @@ export const ImageModal: React.FC<ImageModalProps> = ({
 /* MAIN IMAGE PREVIEW          */
 /* =========================== */
 
-export const MainImagePreview: React.FC<MainImagePreviewProps> = ({
-  image,
-  onRemove,
-  onEdit,
-}) => {
-  if (!image?.file_Url) return null;
+// export const MainImagePreview: React.FC<MainImagePreviewProps> = ({
+//   image,
+//   onRemove,
+//   onEdit,
+// }) => {
+//   if (!image?.file_Url) return null;
 
-  return (
-    <div className="relative mb-4 group">
-      <div className="relative w-full h-64 rounded-lg overflow-hidden">
-        <SafeImage
-          src={image.file_Url}
-          alt="Main product"
-          fill
-          className="object-cover rounded-lg"
-        />
-      </div>
+//   return (
+//     <div className="relative mb-4 group">
+//       <div className="relative w-full h-64 rounded-lg overflow-hidden">
+//         <SafeImage
+//           src={image.file_Url}
+//           alt="Main product"
+//           fill
+//           className="object-cover rounded-lg"
+//         />
+//       </div>
 
-      {/* Overlay buttons */}
-      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg">
-        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            type="button"
-            onClick={onEdit}
-            className="p-2 text-white bg-blue-600 rounded-full hover:bg-blue-700"
-          >
-            <WandSparkles size={16} />
-          </button>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="p-2 text-white bg-red-600 rounded-full hover:bg-red-700"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      </div>
+//       {/* Overlay buttons */}
+//       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg">
+//         <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+//           <button
+//             type="button"
+//             onClick={onEdit}
+//             className="p-2 text-white bg-blue-600 rounded-full hover:bg-blue-700"
+//           >
+//             <WandSparkles size={16} />
+//           </button>
+//           <button
+//             type="button"
+//             onClick={onRemove}
+//             className="p-2 text-white bg-red-600 rounded-full hover:bg-red-700"
+//           >
+//             <X size={16} />
+//           </button>
+//         </div>
+//       </div>
 
-      <div className="absolute bottom-3 left-3">
-        <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-          Main Image
-        </span>
-      </div>
-    </div>
-  );
-};
+//       <div className="absolute bottom-3 left-3">
+//         <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+//           Main Image
+//         </span>
+//       </div>
+//     </div>
+//   );
+// };
 
 /* =========================== */
 /* THUMBNAIL GRID              */
 /* =========================== */
 
-interface ThumbnailGridProps {
-  images: (UploadImage | null)[];
-  realIndex?: number; // new prop
-  onRemoveImage: (index: number) => void;
-  setOpenImageModel: (open: boolean) => void;
-  setSelectedImage: (image: string) => void;
-}
 
-export const ThumbnailGrid: React.FC<ThumbnailGridProps> = ({
-  images,
-  realIndex,
-  onRemoveImage,
-  setOpenImageModel,
-  setSelectedImage,
-}) => (
-  <div className="grid grid-cols-1 gap-3">
-    {images.map((image, index) => {
-      if (!image?.file_Url) return null;
 
-      const actualIndex = realIndex !== undefined ? realIndex : index;
+// export const ThumbnailGrid: React.FC<ThumbnailGridProps> = ({
+//   images,
+//   realIndex,
+//   onRemoveImage,
+//   setOpenImageModel,
+//   setSelectedImage,
+// }) => (
+//   <div className="grid grid-cols-1 gap-3">
+//     {images.map((image, index) => {
+//       if (!image?.file_Url) return null;
 
-      return (
-        <div key={actualIndex} className="relative group">
-          <div className="relative w-full h-20 rounded-md overflow-hidden cursor-pointer">
-            <SafeImage
-              src={image.file_Url}
-              alt={`Thumbnail ${actualIndex}`}
-              fill
-              className="object-cover"
-              onClick={() => {
-                setSelectedImage(image.file_Url);
-                setOpenImageModel(true);
-              }}
-            />
-          </div>
+//       const actualIndex = realIndex !== undefined ? realIndex : index;
 
-          <button
-            type="button"
-            onClick={() => onRemoveImage(actualIndex)}
-            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 
-                       flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 
-                       transition-opacity hover:bg-red-700 shadow-lg"
-          >
-            ×
-          </button>
-        </div>
-      );
-    })}
-  </div>
-);
+//       return (
+//         <div key={actualIndex} className="relative group">
+//           <div className="relative w-full h-20 rounded-md overflow-hidden cursor-pointer">
+//             <SafeImage
+//               src={image.file_Url}
+//               alt={`Thumbnail ${actualIndex}`}
+//               fill
+//               className="object-cover"
+//               onClick={() => {
+//                 setSelectedImage(image.file_Url);
+//                 setOpenImageModel(true);
+//               }}
+//             />
+//           </div>
+
+//           <button
+//             type="button"
+//             onClick={() => onRemoveImage(actualIndex)}
+//             className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 
+//                        flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 
+//                        transition-opacity hover:bg-red-700 shadow-lg"
+//           >
+//             ×
+//           </button>
+//         </div>
+//       );
+//     })}
+//   </div>
+// );
 
 
 export const ImageUploadInfo: React.FC = () => (
