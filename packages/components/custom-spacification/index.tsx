@@ -7,7 +7,7 @@ import Input from '../input';
 const CustomSpecifications = ({ control, error }: any) => {
   const { fields, append, remove } = useFieldArray({
     control,
-    name: 'specifications',
+    name: 'custom_specifications',
   });
 
   return (
@@ -21,7 +21,7 @@ const CustomSpecifications = ({ control, error }: any) => {
           <div key={field.id} className="flex gap-3 items-center">
             {/* KEY FIELD */}
             <Controller
-              name={`specifications.${index}.key`}
+              name={`custom_specifications.${index}.key`}
               control={control}
               rules={{ required: true }}
               render={({ field }) => (
@@ -36,7 +36,7 @@ const CustomSpecifications = ({ control, error }: any) => {
 
             {/* VALUE FIELD */}
             <Controller
-              name={`specifications.${index}.value`}
+              name={`custom_specifications.${index}.value`}
               control={control}
               rules={{ required: true }}
               render={({ field }) => (

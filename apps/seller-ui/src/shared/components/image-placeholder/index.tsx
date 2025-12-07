@@ -11,8 +11,9 @@ interface ImagePlaceholderProps {
   index: number;
   images: (UploadImage | null)[];
   uploading?: boolean;
-  setOpenImageModel?: (open: boolean) => void;
+  setOpenImageModel: (open: boolean) => void;
   openImageModel: boolean;
+  setSelectedImage: (src: string) => void;
 }
 
 export default function ImagePlaceholder({
@@ -24,18 +25,16 @@ export default function ImagePlaceholder({
   images,
   uploading = false,
   setOpenImageModel,
+  openImageModel,
+  setSelectedImage,
 }: ImagePlaceholderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-
-
 
   const openFilePicker = () => inputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-
 
     onImageChange?.(file, index);
   };
@@ -49,8 +48,13 @@ export default function ImagePlaceholder({
   const handleEdit = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!images[index]?.file_Url) return;
-    setOpenImageModel?.(true);
+      const img = images[index]?.file_Url;
+
+    if (!img) return;
+      setSelectedImage(img);  
+
+    setOpenImageModel(true);
+    // console.log('openImageMode', openImageModel);
   };
 
   const handleContainerClick = (e: React.MouseEvent) => {
@@ -58,11 +62,11 @@ export default function ImagePlaceholder({
     else e.stopPropagation();
   };
 
-  const hasImage = Boolean( images[index]?.file_Url);
+  const hasImage = Boolean(images[index]?.file_Url);
 
   // Use ImageKit URL first, fallback to local preview
   const displaySrc = images[index]?.file_Url || '';
-  console.log('Rendering ImagePlaceholder for index', index, 'with displaySrc:', displaySrc);
+
 
   return (
     <div
@@ -127,7 +131,11 @@ export default function ImagePlaceholder({
             <Pencil size={14} className="text-white" />
           </button>
           <div className="text-center p-4">
-            <p className={`text-gray-400 ${small ? 'text-sm' : 'text-lg'} font-semibold mb-2`}>
+            <p
+              className={`text-gray-400 ${
+                small ? 'text-sm' : 'text-lg'
+              } font-semibold mb-2`}
+            >
               {size}
             </p>
             <p className={`text-gray-500 ${small ? 'text-xs' : 'text-sm'}`}>

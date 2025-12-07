@@ -16,6 +16,8 @@ import {
   ImageUploadInfo,
 } from 'apps/seller-ui/src/shared/components/ImageModal';
 import ImagePlaceholder from 'apps/seller-ui/src/shared/components/image-placeholder';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 interface UploadImage {
   fileId: string;
@@ -23,33 +25,38 @@ interface UploadImage {
 }
 
 interface ProductFormData {
-  name: string;
-  description: string;
-  price: number;
+  title: string;
+  short_description: string;
+  detailed_description: string;
+  warranty: string | number | null;
+  cashOnDelivery: string;
+  custom_specifications?:
+    | { key: string; value: string }[]
+    | Record<string, any>;
+  slug: string;
+  tags: string | string[];
+  video_Url?: string;
+  brand?: string;
   category: string;
   subCategory: string;
-  brand: string;
-  video_Url?: string;
-  sale_price: number;
-  regular_price: number;
-  stock: number;
-  sizes: string[];
-  discount: string;
-  tags: string;
-  slug: string;
-  warranty: number | string | null;
-  images: (UploadImage | null)[];
-  colors: string[];
-  specifications: { key: string; value: string }[];
-  customProperties: { label: string; values: string[] }[];
-  cashOnDelivery: string;
-  discount_code?: string[];
+  stock: number | string;
+  colors?: string[];
+  sale_price: number | string;
+  regular_price: number | string;
+  discountCodes?: string[];
+  sizes?: string[];
+  images?: (UploadImage | null)[];
+  customProperties?:
+    | { label: string; values: string[] }[]
+    | Record<string, any>;
 }
 
 export default function Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
   const [isChanged, setIsChanged] = useState(true);
+    const router = useRouter();
+
 
   const {
     register,
@@ -61,49 +68,47 @@ export default function Page() {
     reset,
   } = useForm<ProductFormData>({
     defaultValues: {
-      name: '',
-      description: '',
+      title: '',
+      short_description: '',
+      detailed_description: '',
       category: '',
       subCategory: '',
       video_Url: '',
       regular_price: 0,
       sale_price: 0,
       sizes: [],
-      discount: 'none',
+      discountCodes: [],
       cashOnDelivery: 'yes',
       brand: '',
       slug: '',
       warranty: '',
       stock: 0,
       tags: '',
-      images: [null],
+      images: [],
       colors: [],
-      specifications: [],
       customProperties: [],
-      discount_code: [],
+      custom_specifications: [],
     },
   });
 
-  const {
-    images,
-    selectedImage,
-    openImageModel,
-    setOpenImageModel,
-    setSelectedImage,
-    handleImageChange,
-    handleRemoveImage,
-    // handleEditImage,
-    getValidImages,
-    isUploading,
-    MAX_IMAGES,
-  } = useImageManagement([]);
-
-
+const {
+  images,
+  selectedImage,
+  openImageModel,
+  setOpenImageModel,
+  setSelectedImage,
+  handleImageChange,
+  handleRemoveImage,
+  isUploading,
+} = useImageManagement(watch('images'), (newImages: (UploadImage | null)[]) => {
+  setValue('images', newImages, { shouldValidate: true });
+});
   const { data, isLoading, isError } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       try {
         const res = await axiosInstance.get('product/api/get-categories');
+        console.log('Categories response:', res.data);
         return res.data;
       } catch (err) {
         console.error('Error fetching categories:', err);
@@ -144,80 +149,26 @@ export default function Page() {
   const handleSaveDraft = () => {
     setIsChanged(false);
     // Implement save draft logic here
-    console.log('Save draft functionality');
   };
 
   // In your main component, update the onSubmit and error handling
   const onSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true);
-    setSubmitMessage('');
-
     try {
-      // Validate images
-      const validImages = getValidImages();
-
-      if (validImages.length === 0) {
-        throw new Error('At least one product image is required');
-      }
-
-      // Prepare product data
-      const productData = {
-        ...data,
-        images: validImages,
-        mainImage: validImages[0]?.file_Url,
-        thumbnailImages: validImages.slice(1).map((img) => img.file_Url),
-        status: 'active',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      // API call to create product
-      const response = await axiosInstance.post(
-        '/product/api/create',
-        productData
+      const json = await axiosInstance.post(
+        '/product/api/create-product',
+        data
       );
-
-      if (response.data.success) {
-        setSubmitMessage('🎉 Product created successfully!');
-
-        // Reset form after success
-        setTimeout(() => {
-          reset();
-        }, 2000);
-      } else {
-        throw new Error(response.data.message || 'Failed to create product');
-      }
-    } catch (error: any) {
-      console.error('Error creating product:', error);
-
-      if (error.response?.data?.error) {
-        setSubmitMessage(`Error: ${error.response.data.error}`);
-      } else if (error.message) {
-        setSubmitMessage(error.message);
-      } else {
-        setSubmitMessage('Error creating product. Please try again.');
-      }
+      console.log(json.data);
+      toast.success(json.data.message);
+      router.push('/dashboard/all-products'); // navigate client-side
+      setSubmitMessage('');
+    } catch (err: any) {
+      toast.error(` ${err.message} || 'created failed`);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  // Add error handling for image operations in your JSX
-  {
-    submitMessage && (
-      <div
-        className={`p-3 rounded-md ${
-          submitMessage.includes('Error') ||
-          submitMessage.includes('error') ||
-          submitMessage.includes('failed')
-            ? 'bg-red-100 text-red-700 border border-red-300'
-            : 'bg-green-100 text-green-700 border border-green-300'
-        }`}
-      >
-        {submitMessage}
-      </div>
-    );
-  }
 
   return (
     <div className="w-full">
@@ -247,12 +198,38 @@ export default function Page() {
                   type="text"
                   label="Product Name"
                   placeholder="Product Name"
-                  {...register('name', {
+                  {...register('title', {
                     required: 'Product name is required',
                   })}
                 />
-                {errors.name && (
-                  <span className="text-red-500">{errors.name.message}</span>
+                {errors.title && (
+                  <span className="text-red-500">{errors.title.message}</span>
+                )}
+              </div>
+
+              {/* Short Description */}
+              <div className="md:col-span-2">
+                <Input
+                  type="text"
+                  label="Short Description"
+                  placeholder="Enter a brief description of the product"
+                  {...register('short_description', {
+                    required: 'Short description is required',
+                    minLength: {
+                      value: 5,
+                      message:
+                        'Short description must be at least 10 characters',
+                    },
+                    maxLength: {
+                      value: 200,
+                      message: 'Short description cannot exceed 200 characters',
+                    },
+                  })}
+                />
+                {errors.short_description && (
+                  <span className="text-red-500">
+                    {errors.short_description.message}
+                  </span>
                 )}
               </div>
 
@@ -346,10 +323,10 @@ export default function Page() {
                 )}
               </div>
 
-              {/* Description */}
+              {/* detailed Description */}
               <div className="md:col-span-2">
                 <Controller
-                  name="description"
+                  name="detailed_description"
                   control={control}
                   rules={{
                     required: 'Description is required',
@@ -361,7 +338,7 @@ export default function Page() {
                         ? plainText.split(/\s+/).length
                         : 0;
                       return (
-                        wordCount >= 10 ||
+                        wordCount >= 5 ||
                         'Description must be at least 10 words'
                       );
                     },
@@ -373,9 +350,9 @@ export default function Page() {
                     />
                   )}
                 />
-                {errors.description && (
+                {errors.detailed_description && (
                   <span className="text-red-500">
-                    {errors.description.message}
+                    {errors.detailed_description.message}
                   </span>
                 )}
               </div>
@@ -528,7 +505,7 @@ export default function Page() {
             <div>
               <CustomSpecifications
                 control={control}
-                error={errors.specifications?.message as string}
+                error={errors.custom_specifications?.message as string}
               />
             </div>
 
@@ -567,12 +544,12 @@ export default function Page() {
                       key={code.id}
                       type="button"
                       className={`px-4 py-2 rounded-md ${
-                        watch('discount_code')?.includes(code.id)
+                        watch('discountCodes')?.includes(code.id)
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-700 text-white hover:bg-gray-600'
                       }`}
                       onClick={() => {
-                        const currentSelection = watch('discount_code') || [];
+                        const currentSelection = watch('discountCodes') || [];
                         const updatedSelection = currentSelection.includes(
                           code.id
                         )
@@ -580,7 +557,7 @@ export default function Page() {
                               (id: string) => id !== code.id
                             )
                           : [...currentSelection, code.id];
-                        setValue('discount_code', updatedSelection);
+                        setValue('discountCodes', updatedSelection);
                       }}
                     >
                       {code?.public_name} ({code?.discount_value}
@@ -635,7 +612,7 @@ export default function Page() {
               </h3>
 
               {/* Image Modal */}
-    
+
               {openImageModel && (
                 <ImageModal
                   selectedImage={selectedImage}
@@ -655,31 +632,33 @@ export default function Page() {
                   onRemoveImage={handleRemoveImage}
                   openImageModel={openImageModel}
                   uploading={isUploading(0)}
+                  setSelectedImage={setSelectedImage}
                   // onEditImage={handleEditImage}
                 />
               </div>
 
               {/* Thumbnails + Dynamic Placeholders */}
-<div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2">
-  {images.slice(1).map((image, index) => {
-    const idx = index + 1;
-    return (
-      <div key={idx} className="relative">
-        <ImagePlaceholder
-          size="275 * 850"
-          small={false}
-          images={images}
-          openImageModel={openImageModel}
-          setOpenImageModel={setOpenImageModel}
-          index={idx}
-          onImageChange={handleImageChange}
-          onRemoveImage={handleRemoveImage}
-          uploading={isUploading(idx)}
-        />
-      </div>
-    );
-  })}
-</div>
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2">
+                {images.slice(1).map((image, index) => {
+                  const idx = index + 1;
+                  return (
+                    <div key={idx} className="relative">
+                      <ImagePlaceholder
+                        size="275 * 850"
+                        small={false}
+                        images={images}
+                        openImageModel={openImageModel}
+                        setOpenImageModel={setOpenImageModel}
+                        index={idx}
+                        onImageChange={handleImageChange}
+                        onRemoveImage={handleRemoveImage}
+                        uploading={isUploading(idx)}
+                        setSelectedImage={setSelectedImage}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
 
               {/* Upload Info */}
               <ImageUploadInfo />

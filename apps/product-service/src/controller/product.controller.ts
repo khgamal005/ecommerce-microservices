@@ -1,4 +1,8 @@
-import { NotFoundError, ValidationError } from '@packages/error-handler';
+import {
+  AuthError,
+  NotFoundError,
+  ValidationError,
+} from '@packages/error-handler';
 import prisma from '../../../../packages/libs/prisma';
 import { NextFunction, Request, Response } from 'express';
 
@@ -143,7 +147,7 @@ export const uploadProductImage = async (
     res.status(200).json({
       success: true,
       file_url: response.url,
-      fileId: response.fileId,   // FIX: you wrote "fileName" earlier
+      fileId: response.fileId, // FIX: you wrote "fileName" earlier
       message: 'Image uploaded successfully',
     });
   } catch (error: any) {
@@ -151,7 +155,6 @@ export const uploadProductImage = async (
     next({ status: 500, message: 'Image upload failed' });
   }
 };
-
 
 export const deleteProductImage = async (
   req: Request,
@@ -179,3 +182,268 @@ export const deleteProductImage = async (
   }
 };
 
+export interface UploadImage {
+  fileId: string;
+  file_Url: string;
+}
+
+
+export const createProduct = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const body = req.body;
+
+    const {
+      title,
+      short_description,
+      detailed_description,
+      warranty,
+      cashOnDelivery,
+      custom_specifications,
+      slug,
+      tags,
+      video_Url,
+      brand,
+      category,
+      subCategory,
+      stock,
+      colors = [],
+      sale_price,
+      regular_price,
+      discountCodes = [],
+      sizes = [],
+      images = [],
+      customProperties = {},
+    } = body;
+
+    // -----------------------------
+    // Validate Required Fields
+    // -----------------------------
+    if (
+      !title ||
+      !category ||
+      !slug ||
+      !sale_price ||
+      !regular_price ||
+      !stock ||
+      !images ||
+      !short_description ||
+      !subCategory
+    ) {
+      return next(new ValidationError("Missing required fields"));
+    }
+
+    if (!req.seller?.id) {
+      return next(new AuthError("Seller information is missing"));
+    }
+
+    // -----------------------------
+    // Check Duplicate Slug
+    // -----------------------------
+    const slugExists = await prisma.product.findUnique({
+      where: { slug },
+    });
+
+    if (slugExists) {
+      return next(new ValidationError("Product slug already exists"));
+    }
+
+    // -----------------------------
+    // Validate Images
+    // -----------------------------
+    const validImages = images.filter(
+      (img: any): img is UploadImage => img && img.file_Url && img.fileId
+    );
+
+    // -----------------------------
+    // CREATE PRODUCT WITH IMAGES
+    // -----------------------------
+    let product;
+
+    try {
+      product = await prisma.product.create({
+        data: {
+          title,
+          short_description,
+          detailed_description,
+          warranty,
+          cashOnDelivery,
+          slug,
+          tags: Array.isArray(tags)
+            ? tags
+            : tags.split(",").map((tag: string) => tag.trim()),
+
+          colors,
+          category,
+          subCategory,
+          brand,
+          video_Url,
+          sale_price: parseFloat(sale_price),
+          regular_price: parseFloat(regular_price),
+          stock: parseInt(stock),
+          sizes,
+          discount_codes: discountCodes,
+          customProperties,
+          custom_specifications,
+
+          starting_date: new Date(),
+          ending_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+
+          shop: {
+            connect: { id: req.seller.shop.id },
+          },
+
+          images: {
+            create: validImages.map((img: UploadImage) => ({
+              file_id: img.fileId,
+              url: img.file_Url,
+            })),
+          },
+        },
+        include: { images: true },
+      });
+    } catch (err: any) {
+      console.error("❌ Prisma createProduct error:", err);
+
+      if (err.code === "P2002") {
+        return res
+          .status(400)
+          .json({ message: "Duplicate image file_id detected" });
+      }
+
+      return res
+        .status(500)
+        .json({ message: "Error while creating product. Try again later." });
+    }
+
+    // -----------------------------
+    // SUCCESS RESPONSE
+    // -----------------------------
+    return res.status(201).json({
+      message: "Product created successfully",
+      product,
+    });
+  } catch (error: any) {
+    console.error("❌ Unexpected createProduct error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+
+export const getShopProducts = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const products = await prisma.product.findMany({
+      where: { shopId: req?.seller?.shop?.id },
+      include: { images: true },
+    });
+
+    // ✅ just send the response without 'return'
+    res.status(200).json({
+      message: 'Products fetched successfully',
+      products,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+export const deleteProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { productId } = req.params;
+    const sellerId = (req as any).seller?.shop?.id;
+    const Product = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true ,shopId: true ,isDeleted: true },
+    });
+
+    if (!Product) {
+      return next(new ValidationError("Product not found"));
+    }
+
+    if (Product.isDeleted) {
+      return res.status(400).json({ message: "Product already deleted" });
+    }
+    if (Product.shopId !==sellerId) {
+      return next(new ValidationError("Unauthorized to delete this product"));
+    }
+
+    const deletedProduct = await prisma.product.update({
+      where: { id: productId },
+      data: { isDeleted: true,
+        deletedAt: new Date(), 
+       },
+    });
+
+    if (!deletedProduct) {
+      return res.status(500).json({ message: "Failed to delete product" });
+    }
+    return res.status(200).json({
+      message: "Product deleted successfully",
+      deletedProduct,
+    });
+  } catch (error: any) {
+    console.error("❌ Unexpected deleteProduct error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};  
+
+export const restoreProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { productId } = req.params;
+    const sellerId = (req as any).seller?.shop?.id;
+
+    const Product = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true, shopId: true, isDeleted: true },
+    });
+
+    if (!Product) {
+      return next(new ValidationError("Product not found"));
+    }
+
+    if (!Product.isDeleted) {
+      return res.status(400).json({ message: "Product not deleted" });
+    }
+
+    if (Product.shopId !== sellerId) {
+      return next(
+        new ValidationError("Unauthorized to restore this product")
+      );
+    }
+
+    const restoredProduct = await prisma.product.update({
+      where: { id: productId },
+      data: { isDeleted: false, deletedAt: null },
+    });
+
+    return res.status(200).json({
+      message: "Product restored successfully",
+      restoredProduct,
+    });
+  } catch (error: any) {
+    console.error("❌ Unexpected restoreProduct error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};

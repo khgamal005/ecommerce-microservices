@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "description": "API documentation for product, categories, discounts, and image upload."
   },
+
   "paths": {
     "/product/api/get-categories": {
       "get": {
@@ -104,6 +105,218 @@
         "responses": {
           "200": { "description": "Image uploaded successfully" },
           "400": { "description": "Invalid base64 or empty" }
+        }
+      }
+    },
+
+    "/product/api/shop-products": {
+      "get": {
+        "tags": ["Product"],
+        "summary": "Get products for the authenticated seller",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Products fetched successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Products fetched successfully",
+                  "products": [
+                    {
+                      "id": "69337240650a0d87c9a88ac3",
+                      "title": "Sample Product",
+                      "slug": "sample-product",
+                      "category": "Electronics",
+                      "subCategory": "Tablet",
+                      "images": [
+                        {
+                          "id": "69337240650a0d87c9a88ac4",
+                          "file_id": "6933722e5c7cd75eb87c36f2",
+                          "url": "https://ik.imagekit.io/khaledEasyShop/products/product-image.jpg"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+
+    "/product/api/create-product": {
+      "post": {
+        "tags": ["Product"],
+        "summary": "Create a new product",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "short_description": { "type": "string" },
+                  "detailed_description": { "type": "string" },
+                  "warranty": { "type": "string" },
+                  "cashOnDelivery": { "type": "string" },
+                  "custom_specifications": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": { "type": "string" },
+                        "value": { "type": "string" }
+                      }
+                    }
+                  },
+                  "slug": { "type": "string" },
+                  "tags": {
+                    "oneOf": [
+                      { "type": "string" },
+                      { "type": "array", "items": { "type": "string" } }
+                    ]
+                  },
+                  "video_Url": { "type": "string" },
+                  "brand": { "type": "string" },
+                  "category": { "type": "string" },
+                  "subCategory": { "type": "string" },
+                  "stock": { "type": "integer" },
+                  "colors": { "type": "array", "items": { "type": "string" } },
+                  "sizes": { "type": "array", "items": { "type": "string" } },
+                  "sale_price": { "type": "number" },
+                  "regular_price": { "type": "number" },
+                  "discountCodes": { "type": "array", "items": { "type": "string" } },
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fileId": { "type": "string" },
+                        "file_Url": { "type": "string" }
+                      }
+                    }
+                  },
+                  "customProperties": { "type": "object" }
+                },
+                "required": [
+                  "title",
+                  "category",
+                  "slug",
+                  "sale_price",
+                  "regular_price",
+                  "stock",
+                  "images",
+                  "short_description",
+                  "subCategory"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Product created successfully",
+                  "product": {
+                    "id": "69337240650a0d87c9a88ac3",
+                    "title": "Sample Product",
+                    "slug": "sample-product",
+                    "category": "Electronics",
+                    "subCategory": "Tablet",
+                    "images": [
+                      {
+                        "id": "69337240650a0d87c9a88ac4",
+                        "file_id": "6933722e5c7cd75eb87c36f2",
+                        "url": "https://ik.imagekit.io/khaledEasyShop/products/product-image.jpg"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Validation error / Duplicate slug or image" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+
+    "/product/api/delete-product/{productId}": {
+      "delete": {
+        "tags": ["Product"],
+        "summary": "Soft delete a product",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "schema": { "type": "string" },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product deleted successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Product deleted successfully",
+                  "deletedProduct": {
+                    "id": "69337240650a0d87c9a88ac3",
+                    "isDeleted": true,
+                    "deletedAt": "2025-12-06T20:15:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Product already deleted" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+
+    "/product/api/restore-product/{productId}": {
+      "patch": {
+        "tags": ["Product"],
+        "summary": "Restore a soft deleted product",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "schema": { "type": "string" },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product restored successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Product restored successfully",
+                  "restoredProduct": {
+                    "id": "69337240650a0d87c9a88ac3",
+                    "isDeleted": false,
+                    "deletedAt": null
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Product not deleted" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Internal server error" }
         }
       }
     }

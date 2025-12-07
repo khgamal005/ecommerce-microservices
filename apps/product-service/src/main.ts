@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
+import './jobs/product.crone.job';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
 
-// import { errorMiddleware } from '@packages/error-handler/error-middleware';
 import { errorMiddleware } from '../../../packages/error-handler/error-middleware';
 import router from './routes/product.router';
 const swaggerDocument = require('./swagger-output.json');
