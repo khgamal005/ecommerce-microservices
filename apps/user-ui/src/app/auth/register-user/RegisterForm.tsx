@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import GoogleSignInButton from '../../shared/components/google-button/GoogleSignInButton';
+import GoogleSignInButton from '../../../components/google-button/GoogleSignInButton';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
@@ -214,7 +214,7 @@ const RegisterForm = () => {
       setMessage('✅ Account verified successfully');
 
       timeoutRef.current = setTimeout(() => {
-        router.push('/login');
+        router.push('/auth/login');
       }, 2000);
     },
 
@@ -413,7 +413,7 @@ const RegisterForm = () => {
           {/* Login Link */}
           <p className="mt-4 text-center text-sm">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-500 hover:underline">
+            <Link href="/auth/login" className="text-blue-500 hover:underline">
               Sign in
             </Link>
           </p>

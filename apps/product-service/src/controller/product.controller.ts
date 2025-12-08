@@ -5,6 +5,7 @@ import {
 } from '@packages/error-handler';
 import prisma from '../../../../packages/libs/prisma';
 import { NextFunction, Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 
 import { imagekit } from '@packages/libs/imagekit';
 
@@ -445,5 +446,142 @@ export const restoreProduct = async (
     return res.status(500).json({
       message: "Internal server error",
     });
+  }
+};
+
+
+
+
+// export const getAllProducts = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// )=>{
+//   try {
+//     const page= parseInt(req.query.page as string) || 1;
+//     const limit= parseInt(req.query.limit as string) || 10;
+//     const skip = (page - 1) * limit;
+//     const type= req.query.type as string;
+
+//     const baseFilter={
+//       OR:[
+//         {
+//           starting_date: null,
+//         },
+//         {
+//           ending_date: null,
+//         }
+//       ]
+//     };
+
+//     const orderBy=prisma.productsOrderByWithRelationInput=type==="latest"?{
+//       createdAt:"desc" as prisma.SortOrder
+//     }:{
+//       totalSales:"asc" as prisma.SortOrder
+//     };
+//     }
+//     const [products, top10Products, total,]=await promiseHooks.all([
+//       prisma.product.findMany({
+//         where: {
+//           ...baseFilter,
+//           orderBy: {
+//             totalSales: "asc",
+//           },
+//         },
+//         skip,
+//         take: limit,
+//         orderBy,
+//         include: {
+//           images: true,
+//           shop: true,
+//         },
+//       }),
+      
+//       }),
+//     ]);
+
+//     prisma.product.count({
+//       where: {
+//         ...baseFilter,
+//       },
+//     }),
+//     prisma.product.findMany({
+//       where: baseFilter,
+//       orderBy
+     
+//       take: 10,
+     
+//     }),
+
+//     return res.status(200).json({
+//       message: "Products fetched successfully",
+//       products,
+//       top10By: type==="latest"?"latest":"topSales",
+//       top10Products,
+//       total,
+//       currentPage: page,
+//       totalPages: Math.ceil(total / limit),
+//     });
+
+    
+
+
+    
+//   } catch (error: any) {
+//     console.error("❌ Unexpected getAllProducts error:", error);
+//     return res.status(500).json({
+//       message: "Internal server error",
+//     });
+//   }
+// }
+
+
+
+
+
+export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+    const type = req.query.type as string;
+
+    const orderBy: Prisma.ProductOrderByWithRelationInput =
+      type === "latest"
+        ? { createdAt: "desc" }
+        : { rating: "desc" };
+
+    const [products, total, top10Products] = await Promise.all([
+      prisma.product.findMany({
+        where: { isDeleted: false },
+        skip,
+        take: limit,
+        orderBy,
+        include: { images: true, shop: true },
+      }),
+
+      prisma.product.count({ where: { isDeleted: false } }),
+
+      prisma.product.findMany({
+        where: { isDeleted: false },
+        orderBy,
+        take: 10,
+        include: { images: true, shop: true },
+      }),
+    ]);
+
+    res.status(200).json({
+      message: "Products fetched successfully",
+      products,
+      top10By: type === "latest" ? "latest" : "rating",
+      top10Products,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    });
+
+  } catch (error: any) {
+    console.error("❌ Unexpected getAllProducts error:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };

@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation'; // ✅ useRouter import for App Router
 import { Toaster } from '../../../../components/ui/toaster';
 import { toast } from 'apps/user-ui/src/hooks/use-toast';
-import { Eye, EyeOff , Loader2  } from 'lucide-react';
-import GoogleSignInButton from '../../../shared/components/google-button/GoogleSignInButton';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import GoogleSignInButton from '../../../../components/google-button/GoogleSignInButton';
 import { useMutation } from '@tanstack/react-query';
 
 type LoginInputs = {
@@ -29,48 +29,46 @@ const LoginForm = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// ✅ React Query — Login Mutation
-const loginMutation = useMutation({
-  mutationFn: async (data: LoginInputs) => {
-    const res = await fetch(`${API_URL}/api/login-user`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+  // ✅ React Query — Login Mutation
+  const loginMutation = useMutation({
+    mutationFn: async (data: LoginInputs) => {
+      const res = await fetch(`${API_URL}/api/login-user`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Login failed');
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Login failed');
 
-    return json; // ✅ return backend response
-  },
+      return json; // ✅ return backend response
+    },
 
-  onSuccess: (json) => {
-    // ✅ success toast
-    toast({
-      title: json.message || 'Logged in successfully',
-      className: 'text-green-500',
-    });
+    onSuccess: (json) => {
+      // ✅ success toast
+      toast({
+        title: json.message || 'Logged in successfully',
+        className: 'text-green-500',
+      });
 
-    // ✅ navigate on success
-    router.push('/');
-  },
+      // ✅ navigate on success
+      router.push('/');
+    },
 
-  onError: (err: any) => {
-    // ✅ error toast
-    toast({
-      title: err.message || 'Login failed',
-      className: 'text-red-500',
-    });
-  },
-});
-const onSubmit = (data: LoginInputs) => {
-  loginMutation.mutate(data);
-};
-
-
+    onError: (err: any) => {
+      // ✅ error toast
+      toast({
+        title: err.message || 'Login failed',
+        className: 'text-red-500',
+      });
+    },
+  });
+  const onSubmit = (data: LoginInputs) => {
+    loginMutation.mutate(data);
+  };
 
   return (
     <>
@@ -147,16 +145,17 @@ const onSubmit = (data: LoginInputs) => {
           </div>
 
           {/* Sign In Button */}
-{/* Sign In Button */}
-<button
-  type="submit"
-  disabled={loginMutation.isPending} // ✅ disable while loading
-  className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white py-2 rounded-lg flex items-center justify-center font-medium transition-colors duration-200 mb-4"
->
-  {loginMutation.isPending && <Loader2 className="animate-spin mr-2" />}
-  {loginMutation.isPending ? 'Signing In...' : 'Sign In'}
-</button>
-
+          {/* Sign In Button */}
+          <button
+            type="submit"
+            disabled={loginMutation.isPending} // ✅ disable while loading
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white py-2 rounded-lg flex items-center justify-center font-medium transition-colors duration-200 mb-4"
+          >
+            {loginMutation.isPending && (
+              <Loader2 className="animate-spin mr-2" />
+            )}
+            {loginMutation.isPending ? 'Signing In...' : 'Sign In'}
+          </button>
 
           {/* Divider */}
           <div className="flex items-center my-6">
@@ -182,7 +181,7 @@ const onSubmit = (data: LoginInputs) => {
           <p className="mt-4 text-center text-sm text-gray-600">
             Don't have an account?{' '}
             <Link
-              href="/register-user"
+              href="/auth/register-user"
               className="text-blue-500 hover:underline font-medium"
             >
               Register

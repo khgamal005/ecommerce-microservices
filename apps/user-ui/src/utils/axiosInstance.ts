@@ -4,8 +4,8 @@ let isRefreshing: boolean = false;
 let refreshSubscribers: (() => void)[] = [];
 
 const handleLogout = () => {
-  if (window.location.pathname !== '/login') {
-    window.location.href = '/login';
+  if (window.location.pathname !== '/auth/login') {
+    window.location.href = '/auth/login';
   }
 };
 
