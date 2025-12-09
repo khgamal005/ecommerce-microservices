@@ -146,8 +146,8 @@ model Product {
   brand                 String?
   colors                String[]
   sizes                 String[]
-  starting_date         DateTime
-  ending_date           DateTime
+  starting_date         DateTime?
+  ending_date           DateTime?
   stock                 Int
   regular_price         Float
   sale_price            Float

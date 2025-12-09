@@ -7,8 +7,6 @@ import React, { use, useEffect, useState } from 'react';
 const HeaderBottom = () => {
   const [show, setShow] = useState(false);
   const [sticky, setSticky] = useState(false);
-  const{user} =useUser();
-  console.log(user);
 
   useEffect(() => {
     const handleScroll = () => {

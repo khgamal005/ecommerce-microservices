@@ -118,7 +118,7 @@ const Header = () => {
               </DropdownMenu>
             ) : (
               <Link
-                href="/login"
+                href="/auth/login"
                 className="text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Login

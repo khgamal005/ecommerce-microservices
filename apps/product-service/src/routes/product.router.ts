@@ -1,5 +1,5 @@
 import express from 'express';
-import { createDiscountCode, createProduct, deleteDiscountCode, deleteProduct, deleteProductImage, getCategories, getDiscountCodes, getShopProducts, restoreProduct, uploadProductImage } from '../controller/product.controller';
+import { createDiscountCode, createProduct, deleteDiscountCode, deleteProduct, deleteProductImage, getAllProducts, getCategories, getDiscountCodes, getShopProducts, restoreProduct, uploadProductImage } from '../controller/product.controller';
 import { isSeller } from '@packages/middelware/authorizeRole';
 import { isAuthenticated } from '@packages/middelware/isAuthenticated';
 
@@ -28,6 +28,8 @@ router.patch(
   isAuthenticated,
   restoreProduct
 );
+router.get("/get-all-products", getAllProducts);
+
 
 
 export default router;

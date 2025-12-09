@@ -136,7 +136,7 @@ export const uploadProductImage = async (
 
     if (!fileName) {
       res.status(400).json({ message: 'No image received' });
-      return; // ❗ must return or code continues
+      return; 
     }
 
     const response = await imagekit.upload({
@@ -188,7 +188,6 @@ export interface UploadImage {
   file_Url: string;
 }
 
-
 export const createProduct = async (
   req: any,
   res: Response,
@@ -234,11 +233,11 @@ export const createProduct = async (
       !short_description ||
       !subCategory
     ) {
-      return next(new ValidationError("Missing required fields"));
+      return next(new ValidationError('Missing required fields'));
     }
 
     if (!req.seller?.id) {
-      return next(new AuthError("Seller information is missing"));
+      return next(new AuthError('Seller information is missing'));
     }
 
     // -----------------------------
@@ -249,7 +248,7 @@ export const createProduct = async (
     });
 
     if (slugExists) {
-      return next(new ValidationError("Product slug already exists"));
+      return next(new ValidationError('Product slug already exists'));
     }
 
     // -----------------------------
@@ -275,7 +274,7 @@ export const createProduct = async (
           slug,
           tags: Array.isArray(tags)
             ? tags
-            : tags.split(",").map((tag: string) => tag.trim()),
+            : tags.split(',').map((tag: string) => tag.trim()),
 
           colors,
           category,
@@ -307,35 +306,34 @@ export const createProduct = async (
         include: { images: true },
       });
     } catch (err: any) {
-      console.error("❌ Prisma createProduct error:", err);
+      console.error('❌ Prisma createProduct error:', err);
 
-      if (err.code === "P2002") {
+      if (err.code === 'P2002') {
         return res
           .status(400)
-          .json({ message: "Duplicate image file_id detected" });
+          .json({ message: 'Duplicate image file_id detected' });
       }
 
       return res
         .status(500)
-        .json({ message: "Error while creating product. Try again later." });
+        .json({ message: 'Error while creating product. Try again later.' });
     }
 
     // -----------------------------
     // SUCCESS RESPONSE
     // -----------------------------
     return res.status(201).json({
-      message: "Product created successfully",
+      message: 'Product created successfully',
       product,
     });
   } catch (error: any) {
-    console.error("❌ Unexpected createProduct error:", error);
+    console.error('❌ Unexpected createProduct error:', error);
 
     return res.status(500).json({
-      message: "Internal server error",
+      message: 'Internal server error',
     });
   }
 };
-
 
 export const getShopProducts = async (
   req: any,
@@ -368,41 +366,39 @@ export const deleteProduct = async (
     const sellerId = (req as any).seller?.shop?.id;
     const Product = await prisma.product.findUnique({
       where: { id: productId },
-      select: { id: true ,shopId: true ,isDeleted: true },
+      select: { id: true, shopId: true, isDeleted: true },
     });
 
     if (!Product) {
-      return next(new ValidationError("Product not found"));
+      return next(new ValidationError('Product not found'));
     }
 
     if (Product.isDeleted) {
-      return res.status(400).json({ message: "Product already deleted" });
+      return res.status(400).json({ message: 'Product already deleted' });
     }
-    if (Product.shopId !==sellerId) {
-      return next(new ValidationError("Unauthorized to delete this product"));
+    if (Product.shopId !== sellerId) {
+      return next(new ValidationError('Unauthorized to delete this product'));
     }
 
     const deletedProduct = await prisma.product.update({
       where: { id: productId },
-      data: { isDeleted: true,
-        deletedAt: new Date(), 
-       },
+      data: { isDeleted: true, deletedAt: new Date() },
     });
 
     if (!deletedProduct) {
-      return res.status(500).json({ message: "Failed to delete product" });
+      return res.status(500).json({ message: 'Failed to delete product' });
     }
     return res.status(200).json({
-      message: "Product deleted successfully",
+      message: 'Product deleted successfully',
       deletedProduct,
     });
   } catch (error: any) {
-    console.error("❌ Unexpected deleteProduct error:", error);
+    console.error('❌ Unexpected deleteProduct error:', error);
     return res.status(500).json({
-      message: "Internal server error",
+      message: 'Internal server error',
     });
   }
-};  
+};
 
 export const restoreProduct = async (
   req: Request,
@@ -419,17 +415,15 @@ export const restoreProduct = async (
     });
 
     if (!Product) {
-      return next(new ValidationError("Product not found"));
+      return next(new ValidationError('Product not found'));
     }
 
     if (!Product.isDeleted) {
-      return res.status(400).json({ message: "Product not deleted" });
+      return res.status(400).json({ message: 'Product not deleted' });
     }
 
     if (Product.shopId !== sellerId) {
-      return next(
-        new ValidationError("Unauthorized to restore this product")
-      );
+      return next(new ValidationError('Unauthorized to restore this product'));
     }
 
     const restoredProduct = await prisma.product.update({
@@ -438,19 +432,16 @@ export const restoreProduct = async (
     });
 
     return res.status(200).json({
-      message: "Product restored successfully",
+      message: 'Product restored successfully',
       restoredProduct,
     });
   } catch (error: any) {
-    console.error("❌ Unexpected restoreProduct error:", error);
+    console.error('❌ Unexpected restoreProduct error:', error);
     return res.status(500).json({
-      message: "Internal server error",
+      message: 'Internal server error',
     });
   }
 };
-
-
-
 
 // export const getAllProducts = async (
 //   req: Request,
@@ -496,7 +487,7 @@ export const restoreProduct = async (
 //           shop: true,
 //         },
 //       }),
-      
+
 //       }),
 //     ]);
 
@@ -508,9 +499,9 @@ export const restoreProduct = async (
 //     prisma.product.findMany({
 //       where: baseFilter,
 //       orderBy
-     
+
 //       take: 10,
-     
+
 //     }),
 
 //     return res.status(200).json({
@@ -523,10 +514,6 @@ export const restoreProduct = async (
 //       totalPages: Math.ceil(total / limit),
 //     });
 
-    
-
-
-    
 //   } catch (error: any) {
 //     console.error("❌ Unexpected getAllProducts error:", error);
 //     return res.status(500).json({
@@ -535,53 +522,119 @@ export const restoreProduct = async (
 //   }
 // }
 
+// export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
+//   try {
+//     const page = parseInt(req.query.page as string) || 1;
+//     const limit = parseInt(req.query.limit as string) || 10;
+//     const skip = (page - 1) * limit;
+//     const type = req.query.type as string;
 
+//     const orderBy: Prisma.ProductOrderByWithRelationInput =
+//       type === "latest"
+//         ? { createdAt: "desc" }
+//         : { rating: "desc" };
 
+//     const [products, total, top10Products] = await Promise.all([
+//       prisma.product.findMany({
+//         where: { isDeleted: false },
+//         skip,
+//         take: limit,
+//         orderBy,
+//         include: { images: true, shop: true },
+//       }),
 
+//       prisma.product.count({ where: { isDeleted: false } }),
 
-export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
+//       prisma.product.findMany({
+//         where: { isDeleted: false },
+//         orderBy,
+//         take: 10,
+//         include: { images: true, shop: true },
+//       }),
+//     ]);
+
+//     res.status(200).json({
+//       message: "Products fetched successfully",
+//       products,
+//       top10By: type === "latest" ? "latest" : "rating",
+//       top10Products,
+//       total,
+//       currentPage: page,
+//       totalPages: Math.ceil(total / limit),
+//     });
+
+//   } catch (error: any) {
+//     console.error("❌ Unexpected getAllProducts error:", error);
+//     res.status(500).json({ message: "Internal server error", error: error.message });
+//   }
+// };
+
+export const getAllProducts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
+    // 1️⃣ Pagination
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
+
+    // 2️⃣ Sorting type
     const type = req.query.type as string;
-
     const orderBy: Prisma.ProductOrderByWithRelationInput =
-      type === "latest"
-        ? { createdAt: "desc" }
-        : { rating: "desc" };
+      type === 'latest' ? { createdAt: 'desc' } : { rating: 'desc' };
 
+    // 3️⃣ Base filter (products not in active sale period)
+    const baseFilter: Prisma.ProductWhereInput = {
+      OR: [
+        {
+          starting_date: null,
+        },
+        {
+          ending_date: null,
+        },
+      ],
+      isDeleted: false, // always include this
+    };
+
+    // 4️⃣ Run queries in parallel
     const [products, total, top10Products] = await Promise.all([
+      // Paginated products
       prisma.product.findMany({
-        where: { isDeleted: false },
+        where: baseFilter,
         skip,
         take: limit,
         orderBy,
         include: { images: true, shop: true },
       }),
 
-      prisma.product.count({ where: { isDeleted: false } }),
+      // Total product count (for pagination)
+      prisma.product.count({ where: baseFilter }),
 
+      // Top 10 products (based on type)
       prisma.product.findMany({
-        where: { isDeleted: false },
+        where: baseFilter,
         orderBy,
         take: 10,
         include: { images: true, shop: true },
       }),
     ]);
 
+    // 5️⃣ Send response
     res.status(200).json({
-      message: "Products fetched successfully",
+      message: 'Products fetched successfully',
       products,
-      top10By: type === "latest" ? "latest" : "rating",
+      top10By: type === 'latest' ? 'latest' : 'rating',
       top10Products,
       total,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
     });
-
   } catch (error: any) {
-    console.error("❌ Unexpected getAllProducts error:", error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
+    console.error('❌ Unexpected getAllProducts error:', error);
+    res
+      .status(500)
+      .json({ message: 'Internal server error', error: error.message });
   }
 };
