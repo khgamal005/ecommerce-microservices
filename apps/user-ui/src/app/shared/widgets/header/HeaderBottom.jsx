@@ -2,25 +2,11 @@ import { Routes } from 'apps/user-ui/src/constants/enums';
 import useUser from 'apps/user-ui/src/hooks/use-user';
 import { AlignLeft, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
-import React, { use, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 const HeaderBottom = () => {
   const [show, setShow] = useState(false);
-  const [sticky, setSticky] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 100) {
-        setSticky(true);
-      } else {
-        setSticky(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-  
   const links = [
     { title: "Home", href: Routes.Home },
     { title: "Products", href: Routes.Products },
@@ -36,11 +22,7 @@ const HeaderBottom = () => {
 
   return (
     <div
-      className={`w-full transition-all duration-300 ease-in-out ${
-        sticky
-          ? "fixed top-0 left-0 bg-white shadow-lg z-50 border-b border-gray-100"
-          : "relative bg-white border-b border-gray-200"
-      }`}
+      className="absolute top-[64px] left-0 w-full bg-white shadow-lg z-50 border-b border-gray-100"
     >
       <div className="w-[90%] max-w-7xl m-auto flex items-center justify-between h-14">
         {/* All Departments Dropdown */}
