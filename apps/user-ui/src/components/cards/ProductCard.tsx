@@ -3,9 +3,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Tag, ShoppingBag, Store, Clock, Heart, Eye } from 'lucide-react';
 import ProductDetailsCard from '../modal/ProductDetailsCard ';
+import { useStore } from '../../store';
+import useLocationTracking from '../../hooks/useLocationTracking';
+import useDeviceTracking from '../../hooks/useDeviceTracking';
 
 interface ProductImage {
-  id: string;
+  id: number;
   url: string;
   file_id: string;
 }
@@ -13,9 +16,9 @@ interface ProductImage {
 interface Shop {
   id: string;
   name: string;
-  category: string;
-  address: string;
-  ratings: number;
+  address?: string;
+  ratings?: number;
+  category?: string;
 }
 
 interface Product {
@@ -32,7 +35,8 @@ interface Product {
   colors: string[];
   tags: string[];
   brand: string;
-  warranty: string;
+  warranty: number;
+  sizes: string[];
   cashOnDelivery: string;
   images: ProductImage[];
   shop: Shop;
@@ -52,23 +56,33 @@ function ProductCard({
   showShop = true,
 }: ProductCardProps) {
   const [timeLeft, setTimeLeft] = useState<string>('');
-  const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState<boolean>(false);
-  
-  // Check if product is in wishlist on component mount
-  useEffect(() => {
-    const checkWishlistStatus = () => {
-      const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-      setIsWishlisted(wishlist.includes(product.id));
-    };
-    
-    checkWishlistStatus();
-  }, [product.id]);
+
+  // Zustand store
+  const {
+    cart,
+    wishlist,
+    addToCart,
+    removeFromCart,
+    addToWishlist,
+    removeFromWishlist,
+  } = useStore();
+
+  const locationData = useLocationTracking(); // Changed variable name
+  const deviceData = useDeviceTracking(); // Changed variable name
+
+  // Check if product is in wishlist
+  const isWishlisted = wishlist.some((item) => item.id === product.id);
+  const isInCart = cart.some((item) => item.id === product.id);
+
+  // Check if product is in cart (with quantity)
+  const cartItem = cart.find((item) => item.id === product.id);
+  const cartQuantity = cartItem?.quantity || 0;
 
   useEffect(() => {
     if (!isEvent) return;
     if (!product?.ending_date) return;
-    
+
     const intervalId = setInterval(() => {
       const now = Date.now();
       const endingTime = new Date(product.ending_date).getTime();
@@ -96,26 +110,31 @@ function ProductCard({
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
-      const newWishlistStatus = !isWishlisted;
-      setIsWishlisted(newWishlistStatus);
-      
-      let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-      
-      if (newWishlistStatus) {
-        if (!wishlist.includes(product.id)) {
-          wishlist.push(product.id);
-        }
+      const user = null; // You can get user from your auth context
+
+      if (isWishlisted) {
+        removeFromWishlist(product.id, user, locationData?.city ?? '', deviceData); // Pass city as string
       } else {
-        wishlist = wishlist.filter((id: string) => id !== product.id);
+        // Create a product object matching the store interface
+        const productForStore = {
+          id: product.id,
+          title: product.title,
+          stock: product.stock,
+          regular_price: product.regular_price,
+          sale_price: product.sale_price,
+          rating: product.rating,
+          colors: product.colors,
+          images: product.images[0]?.url || '',
+          shopId: product.shop.id,
+          quantity: 1,
+        };
+
+        addToWishlist(productForStore, user, locationData?.city ?? '', deviceData); // Pass city as string
       }
-      
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      
     } catch (error) {
       console.error('Error toggling wishlist:', error);
-      setIsWishlisted(!isWishlisted);
     }
   };
 
@@ -123,13 +142,56 @@ function ProductCard({
     e.preventDefault();
     e.stopPropagation();
     setIsQuickViewOpen(true);
-    // Implement your quick view modal logic here
   };
 
   const handleQuickAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Implement your quick add to cart logic here
+
+    if (product.stock === 0 || cartQuantity >= product.stock) return;
+
+    const user = null; // You can get user from your auth context
+
+    // Create a product object matching the store interface
+    const productForStore = {
+      id: product.id,
+      title: product.title,
+      stock: product.stock,
+      regular_price: product.regular_price,
+      sale_price: product.sale_price,
+      rating: product.rating,
+      colors: product.colors,
+      images: product.images[0]?.url || '',
+      shopId: product.shop.id,
+      quantity: 1,
+    };
+
+    addToCart(productForStore, user, locationData?.city ?? '', deviceData); // Pass city as string
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (product.stock === 0 || cartQuantity >= product.stock) return;
+
+    const user = null; // You can get user from your auth context
+
+    // Create a product object matching the store interface
+    const productForStore = {
+      id: product.id,
+      title: product.title,
+      stock: product.stock,
+      regular_price: product.regular_price,
+      sale_price: product.sale_price,
+      rating: product.rating,
+      colors: product.colors,
+      images: product.images[0]?.url || '',
+      shopId: product.shop.id,
+      quantity: 1,
+    };
+
+    addToCart(productForStore, user, locationData?.city ?? '', deviceData); // Pass city as string
   };
 
   const imageUrl =
@@ -144,6 +206,17 @@ function ProductCard({
           100
       )
     : 0;
+
+  // Extract the logic for cleaner JSX
+  const isOutOfStock = product.stock === 0;
+  const maxStockReached = cartQuantity >= product.stock;
+  const canAddToCart = !isOutOfStock && !maxStockReached;
+
+  let buttonText = '';
+  if (isOutOfStock) buttonText = 'Out of Stock';
+  else if (maxStockReached) buttonText = `Max (${cartQuantity})`;
+  else if (cartQuantity > 0) buttonText = `${cartQuantity} in Cart • Add More`;
+  else buttonText = 'Add to Cart';
 
   return (
     <div className="group w-full bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
@@ -182,7 +255,9 @@ function ProductCard({
           <button
             onClick={handleWishlistToggle}
             className="bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg"
-            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-label={
+              isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'
+            }
           >
             <Heart
               size={18}
@@ -216,21 +291,20 @@ function ProductCard({
             <ShoppingBag
               size={18}
               className={`transition-all duration-300 ${
-                product.stock === 0 
-                  ? 'text-gray-400' 
+                product.stock === 0
+                  ? 'text-gray-400'
                   : 'text-gray-700 hover:text-green-600'
               }`}
             />
           </button>
         </div>
+
         {isQuickViewOpen && (
-      <ProductDetailsCard
-        data={product}
-        setIsQuickViewOpen={setIsQuickViewOpen}
-      />
-    )}
-
-
+          <ProductDetailsCard
+            data={product}
+            setIsQuickViewOpen={setIsQuickViewOpen}
+          />
+        )}
 
         {/* Product Image */}
         <Link href={`/product/${product.slug}`}>
@@ -246,11 +320,16 @@ function ProductCard({
         {/* Add to Cart Button at Bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent">
           <button
-            className="w-full bg-white text-gray-800 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            disabled={product.stock === 0}
+            onClick={handleAddToCart}
+            className={`w-full py-2 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 ${
+              canAddToCart
+                ? 'bg-white text-gray-800 hover:bg-gray-50'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+            disabled={!canAddToCart}
           >
             <ShoppingBag size={16} />
-            {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+            {buttonText}
           </button>
         </div>
       </div>

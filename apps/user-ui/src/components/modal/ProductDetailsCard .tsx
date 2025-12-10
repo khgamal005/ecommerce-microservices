@@ -1,12 +1,24 @@
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { X, Star, ShoppingBag, Heart, Truck, Shield, CreditCard, Package, Store, MapPin } from 'lucide-react';
+import {
+  X,
+  Star,
+  ShoppingBag,
+  Heart,
+  Truck,
+  Shield,
+  CreditCard,
+  Package,
+  Store,
+  MapPin,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 // ... (keep your interfaces)
 
 interface ProductDetailsCardProps {
   data: {
-    id: number;
+  id: string; 
     title: string;
     category: string;
     subCategory: string;
@@ -19,7 +31,9 @@ interface ProductDetailsCardProps {
     stock: number;
     warranty: number;
     cashOnDelivery: string;
+    sizes: string[];
     shop?: {
+      id: string;
       name: string;
       address?: string;
       ratings?: number;
@@ -29,15 +43,22 @@ interface ProductDetailsCardProps {
   setIsQuickViewOpen: (open: boolean) => void;
 }
 
-function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProps) {
+function ProductDetailsCard({
+  data,
+  setIsQuickViewOpen,
+}: ProductDetailsCardProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isWishlisted, setIsWishlisted] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState(0);
   const [quantity, setQuantity] = React.useState(1);
-  
+  const [selectedSize, setSelectedSize] = React.useState('');
+
+  const router = useRouter();
   const hasSale = data.sale_price > 0 && data.sale_price < data.regular_price;
-  const discountPercentage = hasSale 
-    ? Math.round(((data.regular_price - data.sale_price) / data.regular_price) * 100)
+  const discountPercentage = hasSale
+    ? Math.round(
+        ((data.regular_price - data.sale_price) / data.regular_price) * 100
+      )
     : 0;
 
   // Close modal on ESC key
@@ -55,7 +76,10 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
   // Close modal when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
         setIsQuickViewOpen(false);
       }
     };
@@ -78,9 +102,9 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
 
   const handleQuantityChange = (type: 'increment' | 'decrement') => {
     if (type === 'increment' && quantity < data.stock) {
-      setQuantity(prev => prev + 1);
+      setQuantity((prev) => prev + 1);
     } else if (type === 'decrement' && quantity > 1) {
-      setQuantity(prev => prev - 1);
+      setQuantity((prev) => prev - 1);
     }
   };
 
@@ -99,7 +123,7 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
       {/* Overlay */}
       <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
         {/* Modal Container */}
-        <div 
+        <div
           ref={modalRef}
           className="bg-white rounded-2xl w-full max-w-6xl my-8 shadow-2xl animate-in fade-in zoom-in duration-300"
         >
@@ -139,8 +163,8 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
                       key={image.id}
                       onClick={() => setSelectedImage(index)}
                       className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                        selectedImage === index 
-                          ? 'border-blue-500 ring-2 ring-blue-200' 
+                        selectedImage === index
+                          ? 'border-blue-500 ring-2 ring-blue-200'
                           : 'border-gray-200'
                       }`}
                     >
@@ -166,8 +190,13 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
                     {data.category} • {data.subCategory}
                   </span>
                   <div className="flex items-center gap-1">
-                    <Star size={16} className="fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{data.rating.toFixed(1)}</span>
+                    <Star
+                      size={16}
+                      className="fill-yellow-400 text-yellow-400"
+                    />
+                    <span className="font-medium">
+                      {data.rating.toFixed(1)}
+                    </span>
                   </div>
                 </div>
 
@@ -196,7 +225,8 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
                   </div>
                   {hasSale && (
                     <p className="text-lg font-bold text-red-600">
-                      Save ${(data.regular_price - data.sale_price).toFixed(2)} ({discountPercentage}% off)
+                      Save ${(data.regular_price - data.sale_price).toFixed(2)}{' '}
+                      ({discountPercentage}% off)
                     </p>
                   )}
                 </div>
@@ -209,7 +239,9 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
                 {/* Colors */}
                 {data.colors.length > 0 && (
                   <div className="space-y-2 pt-4 border-t">
-                    <p className="font-medium text-gray-900">Available Colors</p>
+                    <p className="font-medium text-gray-900">
+                      Available Colors
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {data.colors.map((color, index) => (
                         <button
@@ -218,6 +250,22 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
                           style={{ backgroundColor: color }}
                           aria-label={`Color option ${index + 1}`}
                         />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Sizes - Add this section */}
+                {data.sizes && data.sizes.length > 0 && (
+                  <div className="space-y-3 pt-6 border-t">
+                    <p className="font-medium text-gray-900">Select Size</p>
+                    <div className="grid grid-cols-5 gap-2 max-w-xs">
+                      {data.sizes.map((size, index) => (
+                        <button
+                          key={index}
+                          className="px-2 py-3 text-center border border-gray-300 rounded-md hover:border-gray-900 hover:bg-gray-50 transition-colors font-medium"
+                        >
+                          {size}
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -274,58 +322,19 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
                   <button
                     onClick={handleWishlistToggle}
                     className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                    aria-label={
+                      isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'
+                    }
                   >
                     <Heart
                       size={20}
-                      className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}
+                      className={
+                        isWishlisted
+                          ? 'fill-red-500 text-red-500'
+                          : 'text-gray-600'
+                      }
                     />
                   </button>
-                </div>
-
-                {/* Features & Benefits */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                      <Truck size={20} className="text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Free Shipping</p>
-                      <p className="text-sm text-gray-500">On orders over $50</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-50 rounded-lg">
-                      <Shield size={20} className="text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{data.warranty} Year Warranty</p>
-                      <p className="text-sm text-gray-500">Manufacturer warranty</p>
-                    </div>
-                  </div>
-                  
-                  {data.cashOnDelivery === 'yes' && (
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-50 rounded-lg">
-                        <CreditCard size={20} className="text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">Cash on Delivery</p>
-                        <p className="text-sm text-gray-500">Pay when you receive</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-orange-50 rounded-lg">
-                      <Package size={20} className="text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Easy Returns</p>
-                      <p className="text-sm text-gray-500">30-day return policy</p>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Shop Information */}
@@ -338,27 +347,54 @@ function ProductDetailsCard({ data, setIsQuickViewOpen }: ProductDetailsCardProp
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">Sold by</p>
-                          <p className="text-lg font-bold text-gray-900">{data.shop.name}</p>
+                          <p className="text-lg font-bold text-gray-900">
+                            {data.shop.name}
+                          </p>
                         </div>
                       </div>
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                        Visit Shop →
+                      <button
+                        onClick={() =>
+                          router.push(`/inbox/shopId=${data?.shop?.id}`)
+                        }
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-50
+                         hover:bg-blue-100 text-blue-700 hover:text-blue-900 font-medium rounded-lg border
+                          border-blue-200 transition-all duration-200"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Chat with Seller
                       </button>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <MapPin size={14} />
                       <span>{data.shop.address || 'No address provided'}</span>
                     </div>
-                    
-                    <div className="flex items-center gap-4 mt-3">
+
+                    {/* <div className="flex items-center gap-4 mt-3">
                       <div className="flex items-center gap-1">
-                        <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">{data.shop.ratings?.toFixed(1) || '0.0'}</span>
+                        <Star
+                          size={14}
+                          className="fill-yellow-400 text-yellow-400"
+                        />
+                        <span className="font-medium">
+                          {data.shop.ratings?.toFixed(1) || '0.0'}
+                        </span>
                       </div>
                       <span className="text-gray-500">•</span>
-                      <span className="text-gray-500">Category: {data.shop.category}</span>
-                    </div>
+                      <span className="text-gray-500">
+                        Category: {data.shop.category}
+                      </span>
+                    </div> */}
                   </div>
                 )}
               </div>

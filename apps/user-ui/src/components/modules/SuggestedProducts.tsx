@@ -2,7 +2,7 @@
 
 import ProductCard from "../cards/ProductCard";
 interface ProductImage {
-  id: string;
+  id: number;
   url: string;
   file_id: string;
 }
@@ -29,6 +29,7 @@ interface Product {
   tags: string[];
   brand: string;
   warranty: string;
+  sizes: string[];
   cashOnDelivery: string;
   images: ProductImage[];
   shop: Shop;
