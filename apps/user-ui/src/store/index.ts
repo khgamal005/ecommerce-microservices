@@ -84,17 +84,17 @@ export const useStore = create<StoreState>()(
             addedAt: new Date(),
             deviceInfo,
             location,
-            user
+            user,
           };
 
           if (exists) {
             return {
               cart: state.cart.map((p) =>
                 p.id === product.id
-                  ? { 
-                      ...p, 
+                  ? {
+                      ...p,
                       quantity: (p.quantity || 1) + 1,
-                      trackingInfo // Update tracking info on each add
+                      trackingInfo, // Update tracking info on each add
                     }
                   : p
               ),
@@ -103,12 +103,12 @@ export const useStore = create<StoreState>()(
 
           return {
             cart: [
-              ...state.cart, 
-              { 
-                ...product, 
+              ...state.cart,
+              {
+                ...product,
                 quantity: 1,
-                trackingInfo
-              }
+                trackingInfo,
+              },
             ],
           };
         }),
@@ -132,17 +132,17 @@ export const useStore = create<StoreState>()(
             addedAt: new Date(),
             deviceInfo,
             location,
-            user
+            user,
           };
 
-          return { 
+          return {
             wishlist: [
-              ...state.wishlist, 
-              { 
+              ...state.wishlist,
+              {
                 ...product,
-                trackingInfo
-              }
-            ] 
+                trackingInfo,
+              },
+            ],
           };
         }),
 

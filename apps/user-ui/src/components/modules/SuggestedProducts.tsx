@@ -28,7 +28,7 @@ interface Product {
   colors: string[];
   tags: string[];
   brand: string;
-  warranty: string;
+  warranty: number;
   sizes: string[];
   cashOnDelivery: string;
   images: ProductImage[];
@@ -76,9 +76,6 @@ return (
 );
 }
 
-function SkeletonCard() {
-  return (
-    <div className="animate-pulse bg-gray-200 rounded-xl h-[220px] w-full"></div>
-  );
-}
+
+
 
