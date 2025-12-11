@@ -22,6 +22,11 @@ interface TrackingInfo {
 }
 
 interface CartItem extends Product {
+  slug: string;
+  category: string;
+  brand: any;
+  warranty: any;
+  sizes: boolean;
   quantity: number;
   trackingInfo: TrackingInfo;
 }
@@ -77,7 +82,7 @@ export const useStore = create<StoreState>()(
       // CART
       // --------------------------
       addToCart: (product, user, location, deviceInfo) =>
-        set((state) => {
+        set((state: StoreState) => {
           const exists = state.cart.find((p) => p.id === product.id);
 
           const trackingInfo: TrackingInfo = {
@@ -107,6 +112,11 @@ export const useStore = create<StoreState>()(
               {
                 ...product,
                 quantity: 1,
+                slug: '',
+                category: '',
+                brand: null,
+                warranty: null,
+                sizes: false,
                 trackingInfo,
               },
             ],
