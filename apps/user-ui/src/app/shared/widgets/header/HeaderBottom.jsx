@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 const HeaderBottom = () => {
   const [show, setShow] = useState(false);
 
+
   const links = [
     { title: "Home", href: Routes.Home },
     { title: "Products", href: Routes.Products },

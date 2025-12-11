@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Tag, ShoppingBag, Store, Clock, Heart, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import ProductDetailsCard from '../modal/ProductDetailsCard ';
 import { useStore } from '../../store';
 import useLocationTracking from '../../hooks/useLocationTracking';
 import useDeviceTracking from '../../hooks/useDeviceTracking';
+import useUser from '../../hooks/use-user';
 
 interface ProductImage {
   id: number;
@@ -57,6 +59,7 @@ function ProductCard({
 }: ProductCardProps) {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isQuickViewOpen, setIsQuickViewOpen] = useState<boolean>(false);
+  const router = useRouter();
 
   // Zustand store
   const {
@@ -68,8 +71,11 @@ function ProductCard({
     removeFromWishlist,
   } = useStore();
 
-  const locationData = useLocationTracking(); // Changed variable name
-  const deviceData = useDeviceTracking(); // Changed variable name
+  // Get user from React Query
+  const { user, isLoading: userLoading } = useUser();
+  
+  const locationData = useLocationTracking(); 
+  const deviceData = useDeviceTracking(); 
 
   // Check if product is in wishlist
   const isWishlisted = wishlist.some((item) => item.id === product.id);
@@ -111,27 +117,43 @@ function ProductCard({
     e.preventDefault();
     e.stopPropagation();
 
+    // If user is not logged in, redirect to login
+    if (!user) {
+      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
+
     try {
-      const user = null; // You can get user from your auth context
-
       if (isWishlisted) {
-        removeFromWishlist(product.id, user, locationData?.city ?? '', deviceData); // Pass city as string
+        removeFromWishlist(product.id, user, locationData?.city ?? '', deviceData);
       } else {
-        // Create a product object matching the store interface
-        const productForStore = {
-          id: product.id,
-          title: product.title,
-          stock: product.stock,
-          regular_price: product.regular_price,
-          sale_price: product.sale_price,
-          rating: product.rating,
-          colors: product.colors,
-          images: product.images[0]?.url || '',
-          shopId: product.shop.id,
-          quantity: 1,
-        };
+        // Create a complete product object matching the store interface
+    const productForStore = {
+      id: product.id,
+      title: product.title,
+      slug: product.slug,
+      category: product.category,
+      subCategory: product.subCategory,
+      short_description: product.short_description,
+      stock: product.stock,
+      regular_price: product.regular_price,
+      sale_price: product.sale_price,
+      rating: product.rating,
+      colors: product.colors,
+      tags: product.tags,
+      brand: product.brand,
+      warranty: product.warranty,
+      sizes: product.sizes,
+      cashOnDelivery: product.cashOnDelivery,
+      images: product.images?.[0]?.url || '',
+      shopId: product.shop?.id || '',
 
-        addToWishlist(productForStore, user, locationData?.city ?? '', deviceData); // Pass city as string
+      ending_date: product.ending_date,
+      createdAt: product.createdAt,
+      quantity: 1,
+    };
+
+        addToWishlist(productForStore, user, locationData?.city ?? '', deviceData);
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
@@ -148,11 +170,20 @@ function ProductCard({
     e.preventDefault();
     e.stopPropagation();
 
-    if (product.stock === 0 || cartQuantity >= product.stock) return;
+    // If user is not logged in, redirect to login
+    if (!user) {
+      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
 
-    const user = null; // You can get user from your auth context
+    if (product.stock === 0 || cartQuantity >= product.stock) {
+      if (cartQuantity >= product.stock) {
+        alert(`You already have ${cartQuantity} in cart. Only ${product.stock} items available total.`);
+      }
+      return;
+    }
 
-    // Create a product object matching the store interface
+    // Create a complete product object matching the store interface
     const productForStore = {
       id: product.id,
       title: product.title,
@@ -161,37 +192,57 @@ function ProductCard({
       sale_price: product.sale_price,
       rating: product.rating,
       colors: product.colors,
-      images: product.images[0]?.url || '',
-      shopId: product.shop.id,
+      images: product.images?.[0]?.url || '',
+      shopId: product.shop?.id || '',
       quantity: 1,
     };
 
-    addToCart(productForStore, user, locationData?.city ?? '', deviceData); // Pass city as string
+    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (product.stock === 0 || cartQuantity >= product.stock) return;
+    // If user is not logged in, redirect to login
+    if (!user) {
+      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
 
-    const user = null; // You can get user from your auth context
+    if (product.stock === 0 || cartQuantity >= product.stock) {
+      if (cartQuantity >= product.stock) {
+        alert(`You already have ${cartQuantity} in cart. Only ${product.stock} items available total.`);
+      }
+      return;
+    }
 
-    // Create a product object matching the store interface
+    // Create a complete product object matching the store interface
     const productForStore = {
       id: product.id,
       title: product.title,
+      slug: product.slug,
+      category: product.category,
+      subCategory: product.subCategory,
+      short_description: product.short_description,
       stock: product.stock,
       regular_price: product.regular_price,
       sale_price: product.sale_price,
       rating: product.rating,
       colors: product.colors,
-      images: product.images[0]?.url || '',
-      shopId: product.shop.id,
+      tags: product.tags,
+      brand: product.brand,
+      warranty: product.warranty,
+      sizes: product.sizes,
+      cashOnDelivery: product.cashOnDelivery,
+      images: product.images?.[0]?.url || '',
+      shopId: product.shop?.id || '',
+      ending_date: product.ending_date,
+      createdAt: product.createdAt,
       quantity: 1,
     };
 
-    addToCart(productForStore, user, locationData?.city ?? '', deviceData); // Pass city as string
+    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
   };
 
   const imageUrl =
@@ -210,13 +261,28 @@ function ProductCard({
   // Extract the logic for cleaner JSX
   const isOutOfStock = product.stock === 0;
   const maxStockReached = cartQuantity >= product.stock;
-  const canAddToCart = !isOutOfStock && !maxStockReached;
+  const canAddToCart = !isOutOfStock && !maxStockReached && user;
 
   let buttonText = '';
-  if (isOutOfStock) buttonText = 'Out of Stock';
+  if (!user) buttonText = 'Login to Add';
+  else if (isOutOfStock) buttonText = 'Out of Stock';
   else if (maxStockReached) buttonText = `Max (${cartQuantity})`;
   else if (cartQuantity > 0) buttonText = `${cartQuantity} in Cart • Add More`;
   else buttonText = 'Add to Cart';
+
+  // Optional: Show loading state while user data is loading
+  if (userLoading) {
+    return (
+      <div className="w-full bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 animate-pulse">
+        <div className="h-56 w-full bg-gray-200" />
+        <div className="p-4 space-y-3">
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
+          <div className="h-6 bg-gray-200 rounded w-1/4" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="group w-full bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
@@ -258,13 +324,16 @@ function ProductCard({
             aria-label={
               isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'
             }
+            title={!user ? 'Please login to use wishlist' : ''}
           >
             <Heart
               size={18}
               className={`transition-all duration-300 ${
                 isWishlisted
                   ? 'fill-red-500 text-red-500 scale-110'
-                  : 'text-gray-700 hover:text-red-500'
+                  : user
+                  ? 'text-gray-700 hover:text-red-500'
+                  : 'text-gray-400'
               }`}
             />
           </button>
@@ -284,14 +353,15 @@ function ProductCard({
           {/* Quick Add to Cart Icon */}
           <button
             onClick={handleQuickAddToCart}
-            className="bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg"
+            disabled={!user || product.stock === 0 || cartQuantity >= product.stock}
+            className="bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Add to cart"
-            disabled={product.stock === 0}
+            title={!user ? 'Please login to add to cart' : product.stock === 0 ? 'Out of stock' : cartQuantity >= product.stock ? 'Max stock reached' : 'Add to cart'}
           >
             <ShoppingBag
               size={18}
               className={`transition-all duration-300 ${
-                product.stock === 0
+                !user || product.stock === 0 || cartQuantity >= product.stock
                   ? 'text-gray-400'
                   : 'text-gray-700 hover:text-green-600'
               }`}
@@ -327,6 +397,7 @@ function ProductCard({
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
             disabled={!canAddToCart}
+            title={!user ? 'Please login to add to cart' : ''}
           >
             <ShoppingBag size={16} />
             {buttonText}
