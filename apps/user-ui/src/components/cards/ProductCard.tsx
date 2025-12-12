@@ -85,6 +85,31 @@ function ProductCard({
   const cartItem = cart.find((item) => item.id === product.id);
   const cartQuantity = cartItem?.quantity || 0;
 
+  const formatProductForCart = (product: Product) => ({
+  id: product.id,
+  title: product.title,
+  slug: product.slug || '',
+  category: product.category || '',
+  subCategory: product.subCategory || '',
+  short_description: product.short_description || '',
+  stock: product.stock,
+  regular_price: product.regular_price,
+  sale_price: product.sale_price,
+  rating: product.rating,
+  colors: product.colors || [],
+  tags: product.tags || [],
+  brand: product.brand || null,
+  warranty: product.warranty || null,
+  sizes: product.sizes || false,
+  cashOnDelivery: product.cashOnDelivery ?? false,
+  images: product.images?.[0]?.url || '',
+  shopId: product.shop?.id || '',
+  ending_date: product.ending_date || null,
+  createdAt: product.createdAt || null,
+  quantity: 1, // always 1 → Zustand increases it if exists
+});
+
+
   useEffect(() => {
     if (!isEvent) return;
     if (!product?.ending_date) return;
@@ -166,84 +191,45 @@ function ProductCard({
     setIsQuickViewOpen(true);
   };
 
-  const handleQuickAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+const handleQuickAddToCart = (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-    // If user is not logged in, redirect to login
-    if (!user) {
-      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
-      return;
-    }
+  if (!user) {
+    router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+    return;
+  }
 
-    if (product.stock === 0 || cartQuantity >= product.stock) {
-      if (cartQuantity >= product.stock) {
-        alert(`You already have ${cartQuantity} in cart. Only ${product.stock} items available total.`);
-      }
-      return;
-    }
+  if (product.stock === 0 || cartQuantity >= product.stock) return;
 
-    // Create a complete product object matching the store interface
-    const productForStore = {
-      id: product.id,
-      title: product.title,
-      stock: product.stock,
-      regular_price: product.regular_price,
-      sale_price: product.sale_price,
-      rating: product.rating,
-      colors: product.colors,
-      images: product.images?.[0]?.url || '',
-      shopId: product.shop?.id || '',
-      quantity: 1,
-    };
+  addToCart(
+    formatProductForCart(product),
+    user,
+    locationData?.city ?? '',
+    deviceData
+  );
+};
 
-    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
-  };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+const handleAddToCart = (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-    // If user is not logged in, redirect to login
-    if (!user) {
-      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
-      return;
-    }
+  if (!user) {
+    router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+    return;
+  }
 
-    if (product.stock === 0 || cartQuantity >= product.stock) {
-      if (cartQuantity >= product.stock) {
-        alert(`You already have ${cartQuantity} in cart. Only ${product.stock} items available total.`);
-      }
-      return;
-    }
+  if (product.stock === 0 || cartQuantity >= product.stock) return;
 
-    // Create a complete product object matching the store interface
-    const productForStore = {
-      id: product.id,
-      title: product.title,
-      slug: product.slug,
-      category: product.category,
-      subCategory: product.subCategory,
-      short_description: product.short_description,
-      stock: product.stock,
-      regular_price: product.regular_price,
-      sale_price: product.sale_price,
-      rating: product.rating,
-      colors: product.colors,
-      tags: product.tags,
-      brand: product.brand,
-      warranty: product.warranty,
-      sizes: product.sizes,
-      cashOnDelivery: product.cashOnDelivery,
-      images: product.images?.[0]?.url || '',
-      shopId: product.shop?.id || '',
-      ending_date: product.ending_date,
-      createdAt: product.createdAt,
-      quantity: 1,
-    };
+  addToCart(
+    formatProductForCart(product),
+    user,
+    locationData?.city ?? '',
+    deviceData
+  );
+};
 
-    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
-  };
 
   const imageUrl =
     product?.images?.[0]?.url ||

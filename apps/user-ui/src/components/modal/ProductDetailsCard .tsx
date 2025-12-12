@@ -18,7 +18,7 @@ interface ProductDetailsCardProps {
   data: {
     id: string;
     title: string;
-    slug: string; // Add this
+    slug: string; 
     category: string;
     subCategory: string;
     rating: number;
@@ -27,15 +27,14 @@ interface ProductDetailsCardProps {
     regular_price: number;
     short_description: string;
     colors: string[];
-    tags: string[]; // Add this
-    
-    brand: string; // Add this
+    tags: string[]; 
+    brand: string; 
     stock: number;
     warranty: number;
     cashOnDelivery: string;
     sizes: string[];
-    ending_date: Date; // Add this
-    createdAt: string; // Add this
+    ending_date: Date;
+    createdAt: string;
     shop?: {
       id: string;
       name: string;
@@ -53,7 +52,6 @@ function ProductDetailsCard({
 }: ProductDetailsCardProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('');
   const router = useRouter();
   
@@ -66,8 +64,34 @@ function ProductDetailsCard({
     wishlist,
     addToCart,
     addToWishlist,
-    removeFromWishlist
+    removeFromWishlist,
+    decreaseQuantity,
+    removeFromCart
   } = useStore();
+  
+  const formatProductForCart = () => ({
+    id: data.id,
+    title: data.title,
+    slug: data.slug || '',
+    category: data.category || '',
+    subCategory: data.subCategory || '',
+    short_description: data.short_description || '',
+    stock: data.stock,
+    regular_price: data.regular_price,
+    sale_price: data.sale_price,
+    rating: data.rating,
+    colors: data.colors || [],
+    tags: data.tags || [],
+    brand: data.brand || null,
+    warranty: data.warranty || null,
+    sizes: data.sizes || false,
+    cashOnDelivery: data.cashOnDelivery ?? false,
+    images: data.images?.[0]?.url || '',
+    shopId: data.shop?.id || '',
+    ending_date: data.ending_date || null,
+    createdAt: data.createdAt || null,
+    quantity: 1,
+  });
   
   const locationData = useLocationTracking(); 
   const deviceData = useDeviceTracking(); 
@@ -80,7 +104,7 @@ function ProductDetailsCard({
   const currentCartQuantity = cartItem?.quantity || 0;
   
   // Calculate max quantity that can be added
-  const maxQuantityToAdd = data.stock - currentCartQuantity;
+  const maxQuantityToAdd = Math.max(0, data.stock - currentCartQuantity);
   
   const hasSale = data.sale_price > 0 && data.sale_price < data.regular_price;
   const discountPercentage = hasSale
@@ -143,8 +167,8 @@ function ProductDetailsCard({
           sale_price: data.sale_price,
           rating: data.rating,
           colors: data.colors,
-          images: data.images[0]?.url || '', 
-          shopId: data.shop?.id || '', // Provide empty string if shop is undefined
+          images: data.images[0]?.url || '',
+          shopId: data.shop?.id || '',
         },
         user,
         locationData?.city ?? '',
@@ -153,107 +177,79 @@ function ProductDetailsCard({
     }
   };
 
-  const handleQuantityChange = (type: 'increment' | 'decrement') => {
-    if (type === 'increment') {
-      // Check if we can add more based on stock and user login
-      if (!user) {
-        router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
-        return;
-      }
-      
-      if (quantity < maxQuantityToAdd) {
-        setQuantity((prev) => prev + 1);
-      } else if (maxQuantityToAdd > 0 && quantity === maxQuantityToAdd) {
-        alert(`Only ${maxQuantityToAdd} more items available in stock`);
-      }
-    } else if (type === 'decrement' && quantity > 1) {
-      setQuantity((prev) => prev - 1);
+  const handleIncrement = () => {
+    if (!user) {
+      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
+
+    // Check if we can add more based on stock
+    if (currentCartQuantity >= data.stock) {
+      alert(`Only ${data.stock} items available in stock`);
+      return;
+    }
+
+    // Use addToCart to increment quantity
+    addToCart(
+      formatProductForCart(),
+      user,
+      locationData?.city ?? '',
+      deviceData
+    );
+  };
+
+  const handleDecrement = () => {
+    if (!user) {
+      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
+
+    if (currentCartQuantity > 1) {
+      // If quantity > 1, decrease by 1
+      decreaseQuantity(data.id, user, locationData?.city ?? '', deviceData);
+    } else if (currentCartQuantity === 1) {
+      // If quantity = 1, remove from cart completely
+      removeFromCart(data.id, user, locationData?.city ?? '', deviceData);
     }
   };
 
   const handleAddToCart = () => {
-    // Check if user is logged in
     if (!user) {
       router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
       return;
     }
 
-    if (data.stock === 0) {
-      alert('Product is out of stock');
-      return;
-    }
-    
-    if (maxQuantityToAdd <= 0) {
-      alert(`You already have ${currentCartQuantity} in cart. Only ${data.stock} items available total.`);
-      return;
-    }
-    
-    // Add to cart based on quantity
-    for (let i = 0; i < quantity; i++) {
-      addToCart(
-        {
-          id: data.id,
-          title: data.title,
-          stock: data.stock,
-          regular_price: data.regular_price,
-          sale_price: data.sale_price,
-          rating: data.rating,
-          colors: data.colors,
-          images: data.images[0]?.url || '', // Use first image or empty string
-          shopId: data.shop?.id || '', // Provide empty string if shop is undefined
-        },
-        user,
-        locationData?.city ?? '',
-        deviceData
-      );
-    }
-    
+    if (data.stock === 0 || maxQuantityToAdd <= 0) return;
+
+    // Add one item to cart (or add to existing quantity via addToCart)
+    addToCart(
+      formatProductForCart(),
+      user,
+      locationData?.city ?? '',
+      deviceData
+    );
+
     setIsQuickViewOpen(false);
-    
-    // Show success message
-    alert(`Added ${quantity} item(s) to cart!`);
+    alert('Added to cart!');
   };
 
   const handleBuyNow = () => {
-    // Check if user is logged in
     if (!user) {
       router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
       return;
     }
 
-    if (data.stock === 0) {
-      alert('This product is currently out of stock');
-      return;
-    }
-    
-    if (maxQuantityToAdd <= 0) {
-      alert(`You already have ${currentCartQuantity} in cart. Only ${data.stock} items available total.`);
-      return;
-    }
-    
+    if (data.stock === 0 || maxQuantityToAdd <= 0) return;
+
     // Add to cart first
-    for (let i = 0; i < quantity; i++) {
-      addToCart(
-        {
-          id: data.id,
-          title: data.title,
-          stock: data.stock,
-          regular_price: data.regular_price,
-          sale_price: data.sale_price,
-          rating: data.rating,
-          colors: data.colors,
-          images: data.images[0]?.url || '', // Use first image or empty string
-          shopId: data.shop?.id || '', // Provide empty string if shop is undefined
-        },
-        user,
-        locationData?.city ?? '',
-        deviceData
-      );
-    }
-    
+    addToCart(
+      formatProductForCart(),
+      user,
+      locationData?.city ?? '',
+      deviceData
+    );
+
     setIsQuickViewOpen(false);
-    
-    // Redirect to checkout
     router.push('/checkout');
   };
 
@@ -427,7 +423,7 @@ function ProductDetailsCard({
                   </div>
                 )}
 
-                {/* Quantity Selector */}
+                {/* Quantity Selector - Updated to match cart page */}
                 <div className="space-y-2 pt-4 border-t">
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-gray-900">Quantity</p>
@@ -440,19 +436,19 @@ function ProductDetailsCard({
                   <div className="flex items-center gap-4">
                     <div className="flex items-center border border-gray-300 rounded-lg">
                       <button
-                        onClick={() => handleQuantityChange('decrement')}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300"
-                        disabled={quantity <= 1 || !user}
+                        onClick={handleDecrement}
+                        disabled={currentCartQuantity <= 0 || !user}
+                        className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
                       >
                         -
                       </button>
                       <span className="px-4 py-2 border-x border-gray-300 min-w-[60px] text-center">
-                        {quantity}
+                        {currentCartQuantity || 0}
                       </span>
                       <button
-                        onClick={() => handleQuantityChange('increment')}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300"
-                        disabled={quantity >= Math.min(data.stock, 10) || !user}
+                        onClick={handleIncrement}
+                        disabled={currentCartQuantity >= data.stock || !user}
+                        className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
                       >
                         +
                       </button>
@@ -461,7 +457,7 @@ function ProductDetailsCard({
                       {data.stock} items available
                       {currentCartQuantity > 0 && (
                         <span className="text-blue-600 ml-1">
-                          ({currentCartQuantity} already in cart)
+                          ({currentCartQuantity} in cart)
                         </span>
                       )}
                     </span>
@@ -481,8 +477,10 @@ function ProductDetailsCard({
                       ? 'Login to Add' 
                       : data.stock > 0 
                         ? maxQuantityToAdd > 0 
-                          ? 'Add to Cart' 
-                          : 'Out of Stock'
+                          ? currentCartQuantity > 0
+                            ? 'Add More to Cart'
+                            : 'Add to Cart' 
+                          : 'Max Stock Reached'
                         : 'Out of Stock'}
                   </button>
 
@@ -492,7 +490,7 @@ function ProductDetailsCard({
                     className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                     title={!user ? 'Please login to buy now' : ''}
                   >
-                    {!user ? 'Login to Buy' : 'Buy Now'}
+                    {!user ? 'Login to Buy' : currentCartQuantity > 0 ? 'Checkout Now' : 'Buy Now'}
                   </button>
 
                   <button

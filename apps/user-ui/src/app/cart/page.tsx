@@ -24,26 +24,45 @@ import {
 import { useStore } from '../../store';
 
 export default function CartPage() {
-  const { cart, removeFromCart, addToCart, clearCart } = useStore();
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const {
+    cart,
+    removeFromCart,
+    decreaseQuantity,
+    addToCart,
+    clearCart,
+    addToWishlist,
+  } = useStore();
+
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>(
+    'online'
+  );
 
-  // Initialize quantities from cart
-  React.useEffect(() => {
-    const initialQuantities: Record<string, number> = {};
-    cart.forEach((item) => {
-      initialQuantities[item.id] = item.quantity || 1;
-    });
-    setQuantities(initialQuantities);
-  }, [cart]);
+  // Get user info (in a real app, get this from auth context)
+  const getUserInfo = () => {
+    // Replace with actual user from your auth context
+    return {
+      id: 'guest',
+      name: 'Guest User',
+      email: 'guest@example.com',
+    };
+  };
+
+  const getLocation = () => {
+    // In a real app, get from geolocation or IP
+    return 'cart-page';
+  };
+
+  const getDeviceInfo = () => {
+    return navigator.userAgent;
+  };
 
   // Calculate totals
   const subtotal = cart.reduce((total, item) => {
     const price = item.sale_price > 0 ? item.sale_price : item.regular_price;
-    const quantity = quantities[item.id] || item.quantity || 1;
-    return total + price * quantity;
+    return total + price * item.quantity;
   }, 0);
 
   const shipping = subtotal > 100 ? 0 : 9.99;
@@ -51,36 +70,61 @@ export default function CartPage() {
   const discount = couponApplied ? subtotal * 0.1 : 0; // 10% discount if coupon applied
   const total = subtotal + shipping + tax - discount;
 
-  const handleQuantityChange = (id: string, change: number) => {
-    setQuantities((prev) => {
-      const current = prev[id] || 1;
-      const newQuantity = Math.max(1, current + change);
+  // Handler functions
+  const handleIncrement = (itemId: string) => {
+    const item = cart.find((item) => item.id === itemId);
+    if (!item) return;
 
-      // Find the item to check stock
-      const item = cart.find((item) => item.id === id);
-      if (item && newQuantity > item.stock) {
-        alert(`Only ${item.stock} items available in stock`);
-        return prev;
-      }
+    // Check stock
+    if (item.quantity >= item.stock) {
+      alert(`Only ${item.stock} items available in stock`);
+      return;
+    }
 
-      return { ...prev, [id]: newQuantity };
-    });
+    const user = getUserInfo();
+    const location = getLocation();
+    const deviceInfo = getDeviceInfo();
+
+    // Use addToCart to increment quantity
+    addToCart(item, user, location, deviceInfo);
   };
 
-  const handleRemoveItem = (id: string) => {
-    const item = cart.find((item) => item.id === id);
-    if (item && item.trackingInfo?.user) {
-      removeFromCart(
-        id,
-        item.trackingInfo.user,
-        'cart-page',
-        navigator.userAgent
-      );
+  const handleDecrement = (itemId: string) => {
+    const item = cart.find((item) => item.id === itemId);
+    if (!item) return;
+
+    const user = getUserInfo();
+    const location = getLocation();
+    const deviceInfo = getDeviceInfo();
+
+    if (item.quantity > 1) {
+      // If quantity > 1, decrease by 1
+      decreaseQuantity(itemId, user, location, deviceInfo);
+    } else {
+      // If quantity = 1, remove from cart completely
+      removeFromCart(itemId, user, location, deviceInfo);
+    }
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+    if (
+      window.confirm('Are you sure you want to remove this item from cart?')
+    ) {
+      const user = getUserInfo();
+      const location = getLocation();
+      const deviceInfo = getDeviceInfo();
+      removeFromCart(itemId, user, location, deviceInfo);
+    }
+  };
+
+  const handleClearCart = () => {
+    if (window.confirm('Are you sure you want to clear your entire cart?')) {
+      clearCart();
     }
   };
 
   const handleApplyCoupon = () => {
-    if (couponCode.trim() === 'SAVE10') {
+    if (couponCode.trim().toUpperCase() === 'SAVE10') {
       setCouponApplied(true);
       alert('Coupon applied! 10% discount added.');
     } else {
@@ -110,9 +154,28 @@ export default function CartPage() {
     .filter((item) => selectedItems.has(item.id))
     .reduce((total, item) => {
       const price = item.sale_price > 0 ? item.sale_price : item.regular_price;
-      const quantity = quantities[item.id] || item.quantity || 1;
-      return total + price * quantity;
+      return total + price * item.quantity;
     }, 0);
+
+  const handleCheckout = () => {
+    if (cart.length === 0) return;
+
+    // Store payment method
+    localStorage.setItem('selectedPaymentMethod', paymentMethod);
+
+    const paymentText =
+      paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment';
+
+    if (selectedItems.size > 0) {
+      alert(
+        `Proceeding to checkout with ${selectedItems.size} selected items (${paymentText})`
+      );
+    } else {
+      alert(`Proceeding to checkout with all items (${paymentText})`);
+    }
+
+    window.location.href = '/checkout';
+  };
 
   if (cart.length === 0) {
     return (
@@ -168,11 +231,7 @@ export default function CartPage() {
             </div>
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => {
-                  if (confirm('Are you sure you want to clear your cart?')) {
-                    clearCart();
-                  }
-                }}
+                onClick={handleClearCart}
                 className="flex items-center px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
               >
                 <Trash2 className="w-5 h-5 mr-2" />
@@ -230,9 +289,9 @@ export default function CartPage() {
                         100
                     )
                   : 0;
-                const quantity = quantities[item.id] || item.quantity || 1;
                 const itemTotal =
-                  (hasSale ? item.sale_price : item.regular_price) * quantity;
+                  (hasSale ? item.sale_price : item.regular_price) *
+                  item.quantity;
                 const isSelected = selectedItems.has(item.id);
 
                 return (
@@ -296,7 +355,7 @@ export default function CartPage() {
                                     <p className="text-sm text-gray-500">
                                       Category:{' '}
                                       <span className="font-medium">
-                                        {item.category}
+                                        {item.category || 'Uncategorized'}
                                       </span>
                                     </p>
                                     {item.brand && (
@@ -312,7 +371,7 @@ export default function CartPage() {
                                         Warranty:{' '}
                                         <span className="font-medium">
                                           {item.warranty} year
-                                          {item.warranty !== '1' ? 's' : ''}
+                                          {item.warranty !== 1 ? 's' : ''}
                                         </span>
                                       </p>
                                     )}
@@ -343,7 +402,7 @@ export default function CartPage() {
                                       ? item.sale_price
                                       : item.regular_price
                                     ).toFixed(2)}{' '}
-                                    × {quantity}
+                                    × {item.quantity}
                                   </div>
                                 </div>
                               </div>
@@ -367,20 +426,26 @@ export default function CartPage() {
                                     </div>
                                   </div>
                                 )}
-                                {Array.isArray(item.sizes) && item.sizes.length > 0 && (
+                                {item.sizes && (
                                   <div>
                                     <p className="text-sm text-gray-600 mb-2">
                                       Size:
                                     </p>
                                     <div className="flex gap-2">
-                                      {Array.isArray(item.sizes) && item.sizes.map((size, index) => (
-                                        <span
-                                          key={index}
-                                          className="px-2 py-1 text-xs border border-gray-300 rounded"
-                                        >
-                                          {size}
+                                      {Array.isArray(item.sizes) ? (
+                                        item.sizes.map((size, index) => (
+                                          <span
+                                            key={index}
+                                            className="px-2 py-1 text-xs border border-gray-300 rounded"
+                                          >
+                                            {size}
+                                          </span>
+                                        ))
+                                      ) : (
+                                        <span className="px-2 py-1 text-xs border border-gray-300 rounded">
+                                          One Size
                                         </span>
-                                      ))}
+                                      )}
                                     </div>
                                   </div>
                                 )}
@@ -411,23 +476,19 @@ export default function CartPage() {
                               {/* Quantity Control */}
                               <div className="flex items-center border border-gray-300 rounded-lg">
                                 <button
-                                  onClick={() =>
-                                    handleQuantityChange(item.id, -1)
-                                  }
-                                  disabled={quantity <= 1}
-                                  className="px-3 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300"
+                                  onClick={() => handleDecrement(item.id)}
+                                  disabled={item.quantity <= 1}
+                                  className="px-3 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
                                 >
                                   <Minus className="w-4 h-4" />
                                 </button>
                                 <span className="px-4 py-2 border-x border-gray-300 min-w-[40px] text-center">
-                                  {quantity}
+                                  {item.quantity}
                                 </span>
                                 <button
-                                  onClick={() =>
-                                    handleQuantityChange(item.id, 1)
-                                  }
-                                  disabled={quantity >= item.stock}
-                                  className="px-3 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300"
+                                  onClick={() => handleIncrement(item.id)}
+                                  disabled={item.quantity >= item.stock}
+                                  className="px-3 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
                                 >
                                   <Plus className="w-4 h-4" />
                                 </button>
@@ -452,15 +513,6 @@ export default function CartPage() {
                                 >
                                   <Trash2 className="w-5 h-5" />
                                 </button>
-                                <Link
-                                  href={`/product/${item.slug || item.id}`}
-                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                  title="View details"
-                                ></Link>
-                                <button
-                                  className="p-2 text-pink-600 hover:bg-pink-50 rounded-lg transition-colors"
-                                  title="Move to wishlist"
-                                ></button>
                               </div>
                             </div>
                           </div>
@@ -565,7 +617,7 @@ export default function CartPage() {
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value)}
                         placeholder="Enter coupon code"
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
                       />
                       <button
                         onClick={handleApplyCoupon}
@@ -584,88 +636,141 @@ export default function CartPage() {
                     </p>
                   </div>
 
-                  {/* Checkout Button */}
+                  {/* Payment Method Selection */}
+                  <div className="mt-6 border-t border-gray-200 pt-6">
+                    <h4 className="font-semibold text-gray-900 mb-4">
+                      Select Payment Method
+                    </h4>
+
+                    <div className="space-y-3">
+                      {/* Online Payment Option */}
+                      <button
+                        onClick={() => setPaymentMethod('online')}
+                        className={`w-full flex items-center justify-between p-4 border rounded-xl transition-all ${
+                          paymentMethod === 'online'
+                            ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
+                            : 'border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              paymentMethod === 'online'
+                                ? 'border-blue-600 bg-blue-600'
+                                : 'border-gray-300'
+                            }`}
+                          >
+                            {paymentMethod === 'online' && (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <CreditCard className="w-5 h-5 text-blue-600" />
+                            <div className="text-left">
+                              <p className="font-medium text-gray-900">
+                                Pay Online
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Credit/Debit Card, Wallet, etc.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Shield className="w-4 h-4 text-green-600" />
+                          <span className="text-xs text-green-600 font-medium">
+                            Secure
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Cash on Delivery Option */}
+                      <button
+                        onClick={() => setPaymentMethod('cod')}
+                        className={`w-full flex items-center justify-between p-4 border rounded-xl transition-all ${
+                          paymentMethod === 'cod'
+                            ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
+                            : 'border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              paymentMethod === 'cod'
+                                ? 'border-blue-600 bg-blue-600'
+                                : 'border-gray-300'
+                            }`}
+                          >
+                            {paymentMethod === 'cod' && (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="p-1 bg-blue-100 rounded">
+                              <svg
+                                className="w-5 h-5 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                                />
+                              </svg>
+                            </div>
+                            <div className="text-left">
+                              <p className="font-medium text-gray-900">
+                                Cash on Delivery
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Pay when you receive the order
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                          Available
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Security Note */}
+                    <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
+                      <Shield className="w-4 h-4 text-green-600" />
+                      <span>100% secure & protected payment</span>
+                    </div>
+                  </div>
+
+                  {/* Checkout Button - Now at the bottom after payment selection */}
                   <button
-                    onClick={() => (window.location.href = '/checkout')}
-                    className="w-full mt-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
+                    onClick={handleCheckout}
+                    className="w-full mt-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={cart.length === 0}
                   >
-                    Proceed to Checkout
-                    <CreditCard className="w-5 h-5 inline ml-2" />
+                    {paymentMethod === 'cod'
+                      ? 'Place Order (Cash on Delivery)'
+                      : 'Proceed to Payment'}
+                    {paymentMethod === 'cod' ? (
+                      <svg
+                        className="w-5 h-5 inline ml-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                        />
+                      </svg>
+                    ) : (
+                      <CreditCard className="w-5 h-5 inline ml-2" />
+                    )}
                   </button>
-
-                  {/* Security Note */}
-                  <div className="mt-4 text-center">
-                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                      <Shield className="w-4 h-4" />
-                      <span>Secure checkout • 100% safe & protected</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Trust Badges */}
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                <h4 className="font-semibold text-gray-900 mb-4">
-                  Why Shop With Us
-                </h4>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                      <Truck className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Free Shipping</p>
-                      <p className="text-sm text-gray-500">
-                        On orders over $100
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-50 rounded-lg">
-                      <Shield className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        Secure Payment
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        100% secure & encrypted
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-orange-50 rounded-lg">
-                      <RefreshCw className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Easy Returns</p>
-                      <p className="text-sm text-gray-500">
-                        30-day return policy
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Need Help */}
-              <div className="bg-blue-50 rounded-2xl border border-blue-200 p-6">
-                <h4 className="font-semibold text-blue-900 mb-2">Need Help?</h4>
-                <p className="text-sm text-blue-700 mb-4">
-                  Our customer support team is here to help!
-                </p>
-                <div className="space-y-2">
-                  <a
-                    href="mailto:support@example.com"
-                    className="block text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    ✉️ khgamal005@gmail.com
-                  </a>
-                  <a
-                    href="tel:+01229705511"
-                    className="block text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    📞 201229705511
-                  </a>
                 </div>
               </div>
             </div>

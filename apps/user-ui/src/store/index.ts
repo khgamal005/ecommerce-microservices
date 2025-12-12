@@ -53,6 +53,13 @@ interface StoreState {
     deviceInfo: string
   ) => void;
 
+  decreaseQuantity: (
+    id: string,
+    user: any,
+    location: string,
+    deviceInfo: string
+  ) => void;
+
   clearCart: () => void;
 
   addToWishlist: (
@@ -120,6 +127,41 @@ export const useStore = create<StoreState>()(
                 trackingInfo,
               },
             ],
+          };
+        }),
+
+      decreaseQuantity: (id, user, location, deviceInfo) =>
+        set((state) => {
+          return {
+            cart: state.cart
+              .map((product) => {
+                if (product.id !== id) return product;
+
+                // Build tracking info on quantity change
+                const trackingInfo = {
+                  addedAt: product.trackingInfo.addedAt,
+                  updatedAt: new Date(),
+                  user,
+                  location,
+                  deviceInfo,
+                  change: "decrease",
+                };
+
+                // Reduce quantity
+                const newQuantity = (product.quantity || 1) - 1;
+
+                // If quantity becomes 0 → remove later (filter handles it)
+                if (newQuantity <= 0) {
+                  return null;
+                }
+
+                return {
+                  ...product,
+                  quantity: newQuantity,
+                  trackingInfo,
+                };
+              })
+              .filter((p) => p !== null), // remove products with 0 qty
           };
         }),
 
