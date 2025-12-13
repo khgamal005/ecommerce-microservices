@@ -22,16 +22,14 @@ import {
   Eye,
 } from 'lucide-react';
 import { useStore } from '../../store';
+import useUser from '../../hooks/use-user';
+import useLocationTracking from '../../hooks/useLocationTracking';
+import useDeviceTracking from '../../hooks/useDeviceTracking';
+import toast from 'react-hot-toast';
 
 export default function CartPage() {
-  const {
-    cart,
-    removeFromCart,
-    decreaseQuantity,
-    addToCart,
-    clearCart,
-    addToWishlist,
-  } = useStore();
+  const { cart, removeFromCart, decreaseQuantity, addToCart, clearCart } =
+    useStore();
 
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [couponCode, setCouponCode] = useState('');
@@ -40,24 +38,12 @@ export default function CartPage() {
     'online'
   );
 
+  const { user, isLoading: userLoading } = useUser();
+
+  const locationData = useLocationTracking();
+  const deviceData = useDeviceTracking();
+
   // Get user info (in a real app, get this from auth context)
-  const getUserInfo = () => {
-    // Replace with actual user from your auth context
-    return {
-      id: 'guest',
-      name: 'Guest User',
-      email: 'guest@example.com',
-    };
-  };
-
-  const getLocation = () => {
-    // In a real app, get from geolocation or IP
-    return 'cart-page';
-  };
-
-  const getDeviceInfo = () => {
-    return navigator.userAgent;
-  };
 
   // Calculate totals
   const subtotal = cart.reduce((total, item) => {
@@ -77,58 +63,47 @@ export default function CartPage() {
 
     // Check stock
     if (item.quantity >= item.stock) {
-      alert(`Only ${item.stock} items available in stock`);
+      toast.success(`Only ${item.stock} items available in stock`);
+
       return;
     }
 
-    const user = getUserInfo();
-    const location = getLocation();
-    const deviceInfo = getDeviceInfo();
-
     // Use addToCart to increment quantity
-    addToCart(item, user, location, deviceInfo);
+    addToCart(item, user, locationData?.city ?? '', deviceData);
   };
 
   const handleDecrement = (itemId: string) => {
     const item = cart.find((item) => item.id === itemId);
     if (!item) return;
 
-    const user = getUserInfo();
-    const location = getLocation();
-    const deviceInfo = getDeviceInfo();
-
     if (item.quantity > 1) {
       // If quantity > 1, decrease by 1
-      decreaseQuantity(itemId, user, location, deviceInfo);
+      decreaseQuantity(itemId, user, locationData?.city ?? '', deviceData);
     } else {
       // If quantity = 1, remove from cart completely
-      removeFromCart(itemId, user, location, deviceInfo);
+      removeFromCart(itemId, user, locationData?.city ?? '', deviceData);
     }
   };
 
   const handleRemoveItem = (itemId: string) => {
-    if (
-      window.confirm('Are you sure you want to remove this item from cart?')
-    ) {
-      const user = getUserInfo();
-      const location = getLocation();
-      const deviceInfo = getDeviceInfo();
-      removeFromCart(itemId, user, location, deviceInfo);
-    }
+    
+    removeFromCart(itemId, user, locationData?.city ?? '', deviceData);
+
+
+   
   };
 
   const handleClearCart = () => {
-    if (window.confirm('Are you sure you want to clear your entire cart?')) {
-      clearCart();
-    }
+    clearCart();
+   
   };
 
   const handleApplyCoupon = () => {
     if (couponCode.trim().toUpperCase() === 'SAVE10') {
       setCouponApplied(true);
-      alert('Coupon applied! 10% discount added.');
+      toast.success('Coupon applied! 10% discount added.');
     } else {
-      alert('Invalid coupon code. Try "SAVE10"');
+      toast.success('Invalid coupon code. Try SAVE10');
     }
   };
 
@@ -167,11 +142,11 @@ export default function CartPage() {
       paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment';
 
     if (selectedItems.size > 0) {
-      alert(
+      toast.success(
         `Proceeding to checkout with ${selectedItems.size} selected items (${paymentText})`
       );
     } else {
-      alert(`Proceeding to checkout with all items (${paymentText})`);
+      toast.success(`Proceeding to checkout with all items (${paymentText})`);
     }
 
     window.location.href = '/checkout';

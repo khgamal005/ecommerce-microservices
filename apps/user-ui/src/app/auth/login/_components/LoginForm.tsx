@@ -4,11 +4,10 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation'; // ✅ useRouter import for App Router
-import { Toaster } from '../../../../components/ui/toaster';
-import { toast } from 'apps/user-ui/src/hooks/use-toast';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import GoogleSignInButton from '../../../../components/google-button/GoogleSignInButton';
 import { useMutation } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
 type LoginInputs = {
   email: string;
@@ -49,10 +48,8 @@ const LoginForm = () => {
 
     onSuccess: (json) => {
       // ✅ success toast
-      toast({
-        title: json.message || 'Logged in successfully',
-        className: 'text-green-500',
-      });
+toast.success(json.message);
+
 
       // ✅ navigate on success
       router.push('/');
@@ -60,10 +57,8 @@ const LoginForm = () => {
 
     onError: (err: any) => {
       // ✅ error toast
-      toast({
-        title: err.message || 'Login failed',
-        className: 'text-red-500',
-      });
+            toast.error(` ${err.message} || 'Login failed`)
+
     },
   });
   const onSubmit = (data: LoginInputs) => {
@@ -72,7 +67,6 @@ const LoginForm = () => {
 
   return (
     <>
-      <Toaster /> {/* render once, bottom-right */}
       <div className="w-full p-y">
         <form
           onSubmit={handleSubmit(onSubmit)}

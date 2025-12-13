@@ -3,6 +3,7 @@ import "./global.css";
 import Header from "./shared/widgets/header/Header";
 import { Roboto } from "next/font/google";
 import ReactQueryProvider from "./providers/provider";
+import { ToasterClient } from "../utils/ToasterClient";
 
 export const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${roboto.variable} ${poppins.variable}`}>
         <ReactQueryProvider>
           {children}
-          <Toaster />
+          <ToasterClient />
         </ReactQueryProvider>
       </body>
     </html>

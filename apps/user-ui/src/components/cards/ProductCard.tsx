@@ -8,43 +8,11 @@ import { useStore } from '../../store';
 import useLocationTracking from '../../hooks/useLocationTracking';
 import useDeviceTracking from '../../hooks/useDeviceTracking';
 import useUser from '../../hooks/use-user';
+import { formatProductForCart } from '../../utils/formatProduct';
+import { Product } from '../../types/Product';
 
-interface ProductImage {
-  id: number;
-  url: string;
-  file_id: string;
-}
 
-interface Shop {
-  id: string;
-  name: string;
-  address?: string;
-  ratings?: number;
-  category?: string;
-}
 
-interface Product {
-  id: string;
-  title: string;
-  slug: string;
-  category: string;
-  subCategory: string;
-  short_description: string;
-  stock: number;
-  regular_price: number;
-  sale_price: number;
-  rating: number;
-  colors: string[];
-  tags: string[];
-  brand: string;
-  warranty: number;
-  sizes: string[];
-  cashOnDelivery: string;
-  images: ProductImage[];
-  shop: Shop;
-  ending_date: Date;
-  createdAt: string;
-}
 
 interface ProductCardProps {
   product: Product;
@@ -60,6 +28,8 @@ function ProductCard({
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isQuickViewOpen, setIsQuickViewOpen] = useState<boolean>(false);
   const router = useRouter();
+  const productForStore = formatProductForCart(product);
+
 
   // Zustand store
   const {
@@ -79,35 +49,12 @@ function ProductCard({
 
   // Check if product is in wishlist
   const isWishlisted = wishlist.some((item) => item.id === product.id);
-  const isInCart = cart.some((item) => item.id === product.id);
 
   // Check if product is in cart (with quantity)
   const cartItem = cart.find((item) => item.id === product.id);
   const cartQuantity = cartItem?.quantity || 0;
 
-  const formatProductForCart = (product: Product) => ({
-  id: product.id,
-  title: product.title,
-  slug: product.slug || '',
-  category: product.category || '',
-  subCategory: product.subCategory || '',
-  short_description: product.short_description || '',
-  stock: product.stock,
-  regular_price: product.regular_price,
-  sale_price: product.sale_price,
-  rating: product.rating,
-  colors: product.colors || [],
-  tags: product.tags || [],
-  brand: product.brand || null,
-  warranty: product.warranty || null,
-  sizes: product.sizes || false,
-  cashOnDelivery: product.cashOnDelivery ?? false,
-  images: product.images?.[0]?.url || '',
-  shopId: product.shop?.id || '',
-  ending_date: product.ending_date || null,
-  createdAt: product.createdAt || null,
-  quantity: 1, // always 1 → Zustand increases it if exists
-});
+
 
 
   useEffect(() => {
@@ -153,30 +100,7 @@ function ProductCard({
         removeFromWishlist(product.id, user, locationData?.city ?? '', deviceData);
       } else {
         // Create a complete product object matching the store interface
-    const productForStore = {
-      id: product.id,
-      title: product.title,
-      slug: product.slug,
-      category: product.category,
-      subCategory: product.subCategory,
-      short_description: product.short_description,
-      stock: product.stock,
-      regular_price: product.regular_price,
-      sale_price: product.sale_price,
-      rating: product.rating,
-      colors: product.colors,
-      tags: product.tags,
-      brand: product.brand,
-      warranty: product.warranty,
-      sizes: product.sizes,
-      cashOnDelivery: product.cashOnDelivery,
-      images: product.images?.[0]?.url || '',
-      shopId: product.shop?.id || '',
 
-      ending_date: product.ending_date,
-      createdAt: product.createdAt,
-      quantity: 1,
-    };
 
         addToWishlist(productForStore, user, locationData?.city ?? '', deviceData);
       }

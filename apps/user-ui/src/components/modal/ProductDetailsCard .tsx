@@ -1,48 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import {
-  X,
-  Star,
-  ShoppingBag,
-  Heart,
-  Store,
-  MapPin,
-} from 'lucide-react';
+import { X, Star, ShoppingBag, Heart, Store, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../../store';
 import useLocationTracking from '../../hooks/useLocationTracking';
 import useDeviceTracking from '../../hooks/useDeviceTracking';
 import useUser from '../../hooks/use-user';
+import { formatProductForStore } from '../../utils/formatProductForStore';
+import { ProductDetails } from '../../types/Product';
+import toast from 'react-hot-toast';
 
 interface ProductDetailsCardProps {
-  data: {
-    id: string;
-    title: string;
-    slug: string; 
-    category: string;
-    subCategory: string;
-    rating: number;
-    images: { id: number; url: string }[];
-    sale_price: number;
-    regular_price: number;
-    short_description: string;
-    colors: string[];
-    tags: string[]; 
-    brand: string; 
-    stock: number;
-    warranty: number;
-    cashOnDelivery: string;
-    sizes: string[];
-    ending_date: Date;
-    createdAt: string;
-    shop?: {
-      id: string;
-      name: string;
-      address?: string;
-      ratings?: number;
-      category?: string;
-    };
-  };
+  data: ProductDetails;
   setIsQuickViewOpen: (open: boolean) => void;
 }
 
@@ -54,10 +23,11 @@ function ProductDetailsCard({
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
   const router = useRouter();
-  
+  const productForStore = formatProductForStore(data);
+
   // Get user from React Query
   const { user, isLoading: userLoading } = useUser();
-  
+
   // Get store state and actions
   const {
     cart,
@@ -66,46 +36,22 @@ function ProductDetailsCard({
     addToWishlist,
     removeFromWishlist,
     decreaseQuantity,
-    removeFromCart
+    removeFromCart,
   } = useStore();
-  
-  const formatProductForCart = () => ({
-    id: data.id,
-    title: data.title,
-    slug: data.slug || '',
-    category: data.category || '',
-    subCategory: data.subCategory || '',
-    short_description: data.short_description || '',
-    stock: data.stock,
-    regular_price: data.regular_price,
-    sale_price: data.sale_price,
-    rating: data.rating,
-    colors: data.colors || [],
-    tags: data.tags || [],
-    brand: data.brand || null,
-    warranty: data.warranty || null,
-    sizes: data.sizes || false,
-    cashOnDelivery: data.cashOnDelivery ?? false,
-    images: data.images?.[0]?.url || '',
-    shopId: data.shop?.id || '',
-    ending_date: data.ending_date || null,
-    createdAt: data.createdAt || null,
-    quantity: 1,
-  });
-  
-  const locationData = useLocationTracking(); 
-  const deviceData = useDeviceTracking(); 
-  
+
+  const locationData = useLocationTracking();
+  const deviceData = useDeviceTracking();
+
   // Check if product is in wishlist
-  const isWishlisted = wishlist.some(item => item.id === data.id);
-  
+  const isWishlisted = wishlist.some((item) => item.id === data.id);
+
   // Check if product is in cart and get its quantity
-  const cartItem = cart.find(item => item.id === data.id);
+  const cartItem = cart.find((item) => item.id === data.id);
   const currentCartQuantity = cartItem?.quantity || 0;
-  
+
   // Calculate max quantity that can be added
   const maxQuantityToAdd = Math.max(0, data.stock - currentCartQuantity);
-  
+
   const hasSale = data.sale_price > 0 && data.sale_price < data.regular_price;
   const discountPercentage = hasSale
     ? Math.round(
@@ -151,7 +97,9 @@ function ProductDetailsCard({
   const handleWishlistToggle = () => {
     // If user is not logged in, redirect to login
     if (!user) {
-      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      router.push(
+        '/login?redirect=' + encodeURIComponent(window.location.pathname)
+      );
       return;
     }
 
@@ -159,17 +107,7 @@ function ProductDetailsCard({
       removeFromWishlist(data.id, user, locationData?.city ?? '', deviceData);
     } else {
       addToWishlist(
-        {
-          id: data.id,
-          title: data.title,
-          stock: data.stock,
-          regular_price: data.regular_price,
-          sale_price: data.sale_price,
-          rating: data.rating,
-          colors: data.colors,
-          images: data.images[0]?.url || '',
-          shopId: data.shop?.id || '',
-        },
+        productForStore,
         user,
         locationData?.city ?? '',
         deviceData
@@ -179,28 +117,29 @@ function ProductDetailsCard({
 
   const handleIncrement = () => {
     if (!user) {
-      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      router.push(
+        '/login?redirect=' + encodeURIComponent(window.location.pathname)
+      );
       return;
     }
 
     // Check if we can add more based on stock
     if (currentCartQuantity >= data.stock) {
-      alert(`Only ${data.stock} items available in stock`);
+      alert();
+      toast.success(`Only ${data.stock} items available in stock`);
+
       return;
     }
 
     // Use addToCart to increment quantity
-    addToCart(
-      formatProductForCart(),
-      user,
-      locationData?.city ?? '',
-      deviceData
-    );
+    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
   };
 
   const handleDecrement = () => {
     if (!user) {
-      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      router.push(
+        '/login?redirect=' + encodeURIComponent(window.location.pathname)
+      );
       return;
     }
 
@@ -215,39 +154,33 @@ function ProductDetailsCard({
 
   const handleAddToCart = () => {
     if (!user) {
-      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      router.push(
+        '/login?redirect=' + encodeURIComponent(window.location.pathname)
+      );
       return;
     }
 
     if (data.stock === 0 || maxQuantityToAdd <= 0) return;
 
     // Add one item to cart (or add to existing quantity via addToCart)
-    addToCart(
-      formatProductForCart(),
-      user,
-      locationData?.city ?? '',
-      deviceData
-    );
+    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
 
     setIsQuickViewOpen(false);
-    alert('Added to cart!');
+    toast.success('Added to cart!');
   };
 
   const handleBuyNow = () => {
     if (!user) {
-      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      router.push(
+        '/login?redirect=' + encodeURIComponent(window.location.pathname)
+      );
       return;
     }
 
     if (data.stock === 0 || maxQuantityToAdd <= 0) return;
 
     // Add to cart first
-    addToCart(
-      formatProductForCart(),
-      user,
-      locationData?.city ?? '',
-      deviceData
-    );
+    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
 
     setIsQuickViewOpen(false);
     router.push('/checkout');
@@ -400,7 +333,7 @@ function ProductDetailsCard({
                     </div>
                   </div>
                 )}
-                
+
                 {/* Sizes */}
                 {data.sizes && data.sizes.length > 0 && (
                   <div className="space-y-3 pt-6 border-t">
@@ -468,29 +401,37 @@ function ProductDetailsCard({
                 <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
                   <button
                     onClick={handleAddToCart}
-                    disabled={!user || data.stock === 0 || maxQuantityToAdd <= 0}
+                    disabled={
+                      !user || data.stock === 0 || maxQuantityToAdd <= 0
+                    }
                     className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                     title={!user ? 'Please login to add to cart' : ''}
                   >
                     <ShoppingBag size={20} />
-                    {!user 
-                      ? 'Login to Add' 
-                      : data.stock > 0 
-                        ? maxQuantityToAdd > 0 
-                          ? currentCartQuantity > 0
-                            ? 'Add More to Cart'
-                            : 'Add to Cart' 
-                          : 'Max Stock Reached'
-                        : 'Out of Stock'}
+                    {!user
+                      ? 'Login to Add'
+                      : data.stock > 0
+                      ? maxQuantityToAdd > 0
+                        ? currentCartQuantity > 0
+                          ? 'Add More to Cart'
+                          : 'Add to Cart'
+                        : 'Max Stock Reached'
+                      : 'Out of Stock'}
                   </button>
 
                   <button
                     onClick={handleBuyNow}
-                    disabled={!user || data.stock === 0 || maxQuantityToAdd <= 0}
+                    disabled={
+                      !user || data.stock === 0 || maxQuantityToAdd <= 0
+                    }
                     className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                     title={!user ? 'Please login to buy now' : ''}
                   >
-                    {!user ? 'Login to Buy' : currentCartQuantity > 0 ? 'Checkout Now' : 'Buy Now'}
+                    {!user
+                      ? 'Login to Buy'
+                      : currentCartQuantity > 0
+                      ? 'Checkout Now'
+                      : 'Buy Now'}
                   </button>
 
                   <button

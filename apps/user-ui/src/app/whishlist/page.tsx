@@ -2,20 +2,21 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Heart, 
-  ShoppingBag, 
-  Trash2, 
-  Eye, 
+import {
+  Heart,
+  ShoppingBag,
+  Trash2,
+  Eye,
   ChevronRight,
   ArrowLeft,
   Star,
   Package,
   Clock,
   MapPin,
-  Store
+  Store,
 } from 'lucide-react';
 import { useStore } from '../../store';
+import toast from 'react-hot-toast';
 
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist, addToCart } = useStore();
@@ -35,7 +36,7 @@ export default function WishlistPage() {
     const user = getUserInfo();
     const deviceInfo = navigator.userAgent;
     const location = 'wishlist-page'; // You can get actual location if needed
-    
+
     if (user) {
       removeFromWishlist(id, user, location, deviceInfo);
     } else {
@@ -48,12 +49,12 @@ export default function WishlistPage() {
     const user = getUserInfo();
     const deviceInfo = navigator.userAgent;
     const location = 'wishlist-page';
-    
+
     if (user) {
       addToCart(product, user, location, deviceInfo);
-      alert(`${product.title} added to cart!`);
+      toast.success(`${product.title} added to cart!`);
     } else {
-      alert('Please login to add items to cart');
+      toast.error('Please login to add items to cart');
     }
   };
 
@@ -61,19 +62,19 @@ export default function WishlistPage() {
     const user = getUserInfo();
     const deviceInfo = navigator.userAgent;
     const location = 'wishlist-page';
-    
+
     if (!user) {
-      alert('Please login to add items to cart');
+      toast.error('Please login to add items to cart');
       return;
     }
 
     let addedCount = 0;
-    wishlist.forEach(product => {
+    wishlist.forEach((product) => {
       addToCart(product, user, location, deviceInfo);
       addedCount++;
     });
 
-    alert(`Added ${addedCount} items to cart!`);
+    toast.success(`Added ${addedCount} items to cart!`);
   };
 
   if (wishlist.length === 0) {
@@ -88,7 +89,8 @@ export default function WishlistPage() {
               Your Wishlist is Empty
             </h1>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              You haven't added any products to your wishlist yet. Start exploring and add items you love!
+              You haven't added any products to your wishlist yet. Start
+              exploring and add items you love!
             </p>
             <div className="space-y-4">
               <Link
@@ -114,7 +116,8 @@ export default function WishlistPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">My Wishlist</h1>
               <p className="text-gray-600 mt-2">
-                {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'} saved for later
+                {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'}{' '}
+                saved for later
               </p>
             </div>
             <div className="flex items-center space-x-4">
@@ -127,10 +130,12 @@ export default function WishlistPage() {
               </button>
             </div>
           </div>
-          
+
           {/* Breadcrumb */}
           <nav className="flex items-center text-sm text-gray-500 mt-4">
-            <Link href="/" className="hover:text-blue-600">Home</Link>
+            <Link href="/" className="hover:text-blue-600">
+              Home
+            </Link>
             <ChevronRight className="w-4 h-4 mx-2" />
             <span className="text-gray-900 font-medium">Wishlist</span>
           </nav>
@@ -142,13 +147,21 @@ export default function WishlistPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="divide-y divide-gray-100">
                 {wishlist.map((item) => {
-                  const hasSale = item.sale_price > 0 && item.sale_price < item.regular_price;
+                  const hasSale =
+                    item.sale_price > 0 && item.sale_price < item.regular_price;
                   const discountPercentage = hasSale
-                    ? Math.round(((item.regular_price - item.sale_price) / item.regular_price) * 100)
+                    ? Math.round(
+                        ((item.regular_price - item.sale_price) /
+                          item.regular_price) *
+                          100
+                      )
                     : 0;
 
                   return (
-                    <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
+                    <div
+                      key={item.id}
+                      className="p-6 hover:bg-gray-50 transition-colors"
+                    >
                       <div className="flex flex-col sm:flex-row gap-6">
                         {/* Product Image */}
                         <div className="relative w-full sm:w-48 h-48 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
@@ -178,11 +191,14 @@ export default function WishlistPage() {
                               <div className="flex items-start justify-between">
                                 <div>
                                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                    <Link href={`/product/${item.id}`} className="hover:text-blue-600">
+                                    <Link
+                                      href={`/product/${item.id}`}
+                                      className="hover:text-blue-600"
+                                    >
                                       {item.title}
                                     </Link>
                                   </h3>
-                                  
+
                                   {/* Rating */}
                                   <div className="flex items-center gap-2 mb-3">
                                     <div className="flex items-center gap-1">
@@ -231,7 +247,9 @@ export default function WishlistPage() {
                               {/* Colors */}
                               {item.colors && item.colors.length > 0 && (
                                 <div className="mb-4">
-                                  <p className="text-sm text-gray-600 mb-2">Colors:</p>
+                                  <p className="text-sm text-gray-600 mb-2">
+                                    Colors:
+                                  </p>
                                   <div className="flex gap-2">
                                     {item.colors.map((color, index) => (
                                       <div
@@ -251,13 +269,18 @@ export default function WishlistPage() {
                                   <div className="flex items-center gap-2">
                                     <Clock className="w-4 h-4" />
                                     <span>
-                                      Added on {new Date(item.trackingInfo.addedAt).toLocaleDateString()}
+                                      Added on{' '}
+                                      {new Date(
+                                        item.trackingInfo.addedAt
+                                      ).toLocaleDateString()}
                                     </span>
                                   </div>
                                   {item.trackingInfo.location && (
                                     <div className="flex items-center gap-2">
                                       <MapPin className="w-4 h-4" />
-                                      <span>From {item.trackingInfo.location}</span>
+                                      <span>
+                                        From {item.trackingInfo.location}
+                                      </span>
                                     </div>
                                   )}
                                 </div>
@@ -276,7 +299,9 @@ export default function WishlistPage() {
                                 }`}
                               >
                                 <ShoppingBag className="w-5 h-5" />
-                                {item.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                                {item.stock > 0
+                                  ? 'Add to Cart'
+                                  : 'Out of Stock'}
                               </button>
 
                               <Link
@@ -288,7 +313,9 @@ export default function WishlistPage() {
                               </Link>
 
                               <button
-                                onClick={() => handleRemoveFromWishlist(item.id)}
+                                onClick={() =>
+                                  handleRemoveFromWishlist(item.id)
+                                }
                                 className="flex items-center justify-center gap-2 px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                               >
                                 <Trash2 className="w-5 h-5" />
@@ -321,10 +348,16 @@ export default function WishlistPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Total Value</span>
                     <span className="text-xl font-bold text-gray-900">
-                      ${wishlist.reduce((total, item) => {
-                        const price = item.sale_price > 0 ? item.sale_price : item.regular_price;
-                        return total + price;
-                      }, 0).toFixed(2)}
+                      $
+                      {wishlist
+                        .reduce((total, item) => {
+                          const price =
+                            item.sale_price > 0
+                              ? item.sale_price
+                              : item.regular_price;
+                          return total + price;
+                        }, 0)
+                        .toFixed(2)}
                     </span>
                   </div>
                   <div className="pt-4 border-t">
@@ -365,10 +398,16 @@ export default function WishlistPage() {
                 </h3>
                 <button
                   onClick={() => {
-                    if (confirm('Are you sure you want to clear your entire wishlist?')) {
+                    if (
+                      confirm(
+                        'Are you sure you want to clear your entire wishlist?'
+                      )
+                    ) {
                       // You can add clearWishlist function to your store if needed
                       // For now, remove items one by one
-                      wishlist.forEach(item => handleRemoveFromWishlist(item.id));
+                      wishlist.forEach((item) =>
+                        handleRemoveFromWishlist(item.id)
+                      );
                     }
                   }}
                   className="w-full flex items-center justify-center gap-2 border border-red-300 text-red-600 py-3 rounded-lg font-medium hover:bg-red-50 transition-colors"
