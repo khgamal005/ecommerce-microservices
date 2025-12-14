@@ -13,9 +13,11 @@
       "serve": {
         "executor": "@nx/js:node",
         "defaultConfiguration": "development",
-        "dependsOn": ["build"],
+        "dependsOn": [
+          "build"
+        ],
         "options": {
-      "buildTarget": "product-service:build",
+          "buildTarget": "product-service:build",
           "runBuildTargetDependencies": false,
           "inspect": false
         },
@@ -30,7 +32,9 @@
       },
       "build": {
         "executor": "@nx/esbuild:esbuild",
-        "outputs": ["{options.outputPath}"],
+        "outputs": [
+          "{options.outputPath}"
+        ],
         "options": {
           "outputPath": "dist/apps/product-service",
           "main": "apps/product-service/src/main.ts",
@@ -45,17 +49,23 @@
           ],
           "esbuildOptions": {
             "sourcemap": true,
-            "outExtension": { ".js": ".js" },
-            "external": ["@prisma/client", ".prisma/client"]
+            "outExtension": {
+              ".js": ".js"
+            },
+            "external": [
+              "@prisma/client",
+              ".prisma/client"
+            ]
           },
-          "format": ["cjs"],
+          "format": [
+            "cjs"
+          ],
           "platform": "node",
           "bundle": true
         },
         "dependsOn": [
           {
-            "target": "prisma-generate",
-            "projects": "self"
+            "target": "prisma-generate"
           }
         ]
       },

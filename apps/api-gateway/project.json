@@ -1,7 +1,9 @@
 {
   "name": "@my-app/api-gateway",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/api-gateway/src",
   "projectType": "application",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",
@@ -17,7 +19,9 @@
         "assets": ["apps/api-gateway/src/assets"],
         "esbuildOptions": {
           "sourcemap": true,
-          "outExtension": { ".js": ".js" }
+          "outExtension": {
+            ".js": ".js"
+          }
         }
       },
       "configurations": {
@@ -25,7 +29,9 @@
         "production": {
           "esbuildOptions": {
             "sourcemap": false,
-            "outExtension": { ".js": ".js" }
+            "outExtension": {
+              ".js": ".js"
+            }
           }
         }
       }
@@ -48,6 +54,5 @@
         }
       }
     }
-  },
-  "tags": []
+  }
 }

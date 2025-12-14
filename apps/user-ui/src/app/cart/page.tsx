@@ -34,16 +34,18 @@ export default function CartPage() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>(
-    'online'
-  );
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [discountProductId, setDiscountProductId] = useState<string | null>('');
+  const [discountPercent, setDiscountPercent] = useState<number | null>(0);
+  const [discountAmount, setDiscountAmount] = useState<number | null>(0);
+  const [paymentMethod, setPaymentMethod] = useState<
+    'credit-card' | 'cash-on-delivery'
+  >('credit-card');
 
   const { user, isLoading: userLoading } = useUser();
 
   const locationData = useLocationTracking();
   const deviceData = useDeviceTracking();
-
-  // Get user info (in a real app, get this from auth context)
 
   // Calculate totals
   const subtotal = cart.reduce((total, item) => {
@@ -52,9 +54,8 @@ export default function CartPage() {
   }, 0);
 
   const shipping = subtotal > 100 ? 0 : 9.99;
-  const tax = subtotal * 0.08; // 8% tax
-  const discount = couponApplied ? subtotal * 0.1 : 0; // 10% discount if coupon applied
-  const total = subtotal + shipping + tax - discount;
+  const discount = couponApplied ? subtotal * 0.1 : 0;
+  const total = subtotal + shipping - discount;
 
   // Handler functions
   const handleIncrement = (itemId: string) => {
@@ -86,16 +87,11 @@ export default function CartPage() {
   };
 
   const handleRemoveItem = (itemId: string) => {
-    
     removeFromCart(itemId, user, locationData?.city ?? '', deviceData);
-
-
-   
   };
 
   const handleClearCart = () => {
     clearCart();
-   
   };
 
   const handleApplyCoupon = () => {
@@ -139,7 +135,9 @@ export default function CartPage() {
     localStorage.setItem('selectedPaymentMethod', paymentMethod);
 
     const paymentText =
-      paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment';
+      paymentMethod === 'cash-on-delivery'
+        ? 'Cash on Delivery'
+        : 'Online Payment';
 
     if (selectedItems.size > 0) {
       toast.success(
@@ -541,12 +539,6 @@ export default function CartPage() {
                       </span>
                     </div>
 
-                    {/* Tax */}
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Tax</span>
-                      <span className="font-medium">${tax.toFixed(2)}</span>
-                    </div>
-
                     {/* Discount */}
                     {couponApplied && (
                       <div className="flex justify-between items-center text-green-600">
@@ -611,6 +603,36 @@ export default function CartPage() {
                     </p>
                   </div>
 
+                  {/* select address */}
+                  <div className="mb-6">
+                    <label
+                      htmlFor="shipping-address"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Shipping Address
+                    </label>
+
+                    <div className="relative">
+                      <select
+                        id="shipping-address"
+                        value={selectedAddressId}
+                        onChange={(e) => setSelectedAddressId(e.target.value)}
+                        className="w-full px-4 py-3 bg-white border border-gray-300 
+                        rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 transition-all cursor-pointer"
+                      >
+                        <option value="" disabled>
+                          Select shipping address
+                        </option>
+                        <option value="123">
+                          🏠 Home - Alex (123 Main St)
+                        </option>
+                        <option value="456">🏢 Office (456 Work Ave)</option>
+                        <option value="789">👨‍👩‍👧 Parents (789 Family Rd)</option>
+                      </select>
+                    </div>
+                  </div>
+
                   {/* Payment Method Selection */}
                   <div className="mt-6 border-t border-gray-200 pt-6">
                     <h4 className="font-semibold text-gray-900 mb-4">
@@ -620,9 +642,9 @@ export default function CartPage() {
                     <div className="space-y-3">
                       {/* Online Payment Option */}
                       <button
-                        onClick={() => setPaymentMethod('online')}
+                        onClick={() => setPaymentMethod('credit-card')}
                         className={`w-full flex items-center justify-between p-4 border rounded-xl transition-all ${
-                          paymentMethod === 'online'
+                          paymentMethod === 'credit-card'
                             ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
                             : 'border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                         }`}
@@ -630,12 +652,12 @@ export default function CartPage() {
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                              paymentMethod === 'online'
+                              paymentMethod === 'credit-card'
                                 ? 'border-blue-600 bg-blue-600'
                                 : 'border-gray-300'
                             }`}
                           >
-                            {paymentMethod === 'online' && (
+                            {paymentMethod === 'credit-card' && (
                               <div className="w-2 h-2 bg-white rounded-full"></div>
                             )}
                           </div>
@@ -661,9 +683,9 @@ export default function CartPage() {
 
                       {/* Cash on Delivery Option */}
                       <button
-                        onClick={() => setPaymentMethod('cod')}
+                        onClick={() => setPaymentMethod('cash-on-delivery')}
                         className={`w-full flex items-center justify-between p-4 border rounded-xl transition-all ${
-                          paymentMethod === 'cod'
+                          paymentMethod === 'cash-on-delivery'
                             ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
                             : 'border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                         }`}
@@ -671,12 +693,12 @@ export default function CartPage() {
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                              paymentMethod === 'cod'
+                              paymentMethod === 'cash-on-delivery'
                                 ? 'border-blue-600 bg-blue-600'
                                 : 'border-gray-300'
                             }`}
                           >
-                            {paymentMethod === 'cod' && (
+                            {paymentMethod === 'cash-on-delivery' && (
                               <div className="w-2 h-2 bg-white rounded-full"></div>
                             )}
                           </div>
@@ -725,10 +747,10 @@ export default function CartPage() {
                     className="w-full mt-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={cart.length === 0}
                   >
-                    {paymentMethod === 'cod'
+                    {paymentMethod === 'cash-on-delivery'
                       ? 'Place Order (Cash on Delivery)'
                       : 'Proceed to Payment'}
-                    {paymentMethod === 'cod' ? (
+                    {paymentMethod === 'cash-on-delivery' ? (
                       <svg
                         className="w-5 h-5 inline ml-2"
                         fill="none"

@@ -47,7 +47,6 @@ const LoginForm = () => {
     },
 
     onSuccess: (json) => {
-      // ✅ success toast
 toast.success(json.message);
 
 
@@ -138,7 +137,6 @@ toast.success(json.message);
             </Link>
           </div>
 
-          {/* Sign In Button */}
           {/* Sign In Button */}
           <button
             type="submit"

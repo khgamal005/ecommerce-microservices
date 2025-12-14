@@ -32,7 +32,9 @@
       },
       "build": {
         "executor": "@nx/esbuild:esbuild",
-        "outputs": ["{options.outputPath}"],
+        "outputs": [
+          "{options.outputPath}"
+        ],
         "options": {
           "outputPath": "dist/apps/auth-service",
           "main": "apps/auth-service/src/main.ts",
@@ -55,14 +57,15 @@
               ".prisma/client"
             ]
           },
-          "format": ["cjs"],
+          "format": [
+            "cjs"
+          ],
           "platform": "node",
           "bundle": true
         },
         "dependsOn": [
           {
-            "target": "prisma-generate",
-            "projects": "self"
+            "target": "prisma-generate"
           }
         ]
       },

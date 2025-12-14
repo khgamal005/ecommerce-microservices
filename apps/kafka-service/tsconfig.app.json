@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../dist/apps/kafka-service",
+    "types": ["node"],
+    "rootDir": "src",
+    "tsBuildInfoFile": "../../dist/apps/kafka-service/tsconfig.app.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": []
+}
+
