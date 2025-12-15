@@ -133,9 +133,9 @@ enum ProductStatus {
 }
 
 model Product {
-  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
   title                 String
-  slug                  String   @unique
+  slug                  String    @unique
   category              String
   subCategory           String
   short_description     String
@@ -151,18 +151,52 @@ model Product {
   stock                 Int
   regular_price         Float
   sale_price            Float
-  rating                Float    @default(5)
+  rating                Float     @default(5)
   warranty              String
   custom_specifications Json?
   customProperties      Json?
-  isDeleted             Boolean? @default(false)
+  isDeleted             Boolean?  @default(false)
   cashOnDelivery        String?
-  discount_codes        String[] @db.ObjectId
-  status                String   @default("active")
-  shopId                String   @db.ObjectId
-  shop                  Shops    @relation(fields: [shopId], references: [id])
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-    deletedAt    DateTime? 
+  discount_codes        String[]  @db.ObjectId
+  status                String    @default("active")
+  shopId                String    @db.ObjectId
+  shop                  Shops     @relation(fields: [shopId], references: [id])
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+}
 
+model UserAnalytics {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique
+
+  actions Json
+
+  country   String?
+  city      String?
+  latitude  Float?
+  longitude Float?
+
+  lastVisited DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductAnalytics {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  productId String  @unique
+  shopId    String?
+
+  views            Int @default(0)
+  cartAdds         Int @default(0)
+  cartRemovals     Int @default(0)
+  wishlistAdds     Int @default(0)
+  wishlistRemovals Int @default(0)
+  purchases        Int @default(0)
+
+  lastVisited DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

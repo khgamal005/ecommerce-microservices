@@ -3,10 +3,13 @@
   "compilerOptions": {
     "outDir": "../../dist/apps/kafka-service",
     "types": ["node"],
-    "rootDir": "src",
+    "rootDir": "../../",
     "tsBuildInfoFile": "../../dist/apps/kafka-service/tsconfig.app.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": []
+  "include": [
+    "src/**/*.ts", 
+    "src/**/*.json",
+    "../../packages/**/*"
+,  ],  "exclude": []
 }
 
