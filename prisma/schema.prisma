@@ -188,12 +188,14 @@ model ProductAnalytics {
   productId String  @unique
   shopId    String?
 
-  views            Int @default(0)
-  cartAdds         Int @default(0)
-  cartRemovals     Int @default(0)
-  wishlistAdds     Int @default(0)
-  wishlistRemovals Int @default(0)
-  purchases        Int @default(0)
+  views              Int @default(0)
+  cartAdds           Int @default(0)
+  wishlistAdds       Int @default(0)
+  purchases          Int @default(0)
+  cartRemovals       Int @default(0)
+  removeFromCart     Int @default(0) // Add this
+  removeFromWishlist Int @default(0) // Add this
+  quantityDecreases  Int @default(0) // Add this
 
   lastVisited DateTime
 

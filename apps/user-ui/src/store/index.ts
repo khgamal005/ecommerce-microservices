@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { sendKafkaEvent } from '../actions/track.user';
 
+// --------------------------
+// TYPES
+// --------------------------
 interface Product {
   id: string;
   title: string;
@@ -45,22 +49,19 @@ interface StoreState {
     location: string,
     deviceInfo: string
   ) => void;
-
   removeFromCart: (
     id: string,
     user: any,
     location: string,
     deviceInfo: string
   ) => void;
-
   decreaseQuantity: (
     id: string,
     user: any,
     location: string,
     deviceInfo: string
   ) => void;
-
-  clearCart: () => void;
+  clearCart: (user?: any) => void;
 
   addToWishlist: (
     product: Product,
@@ -68,17 +69,18 @@ interface StoreState {
     location: string,
     deviceInfo: string
   ) => void;
-
   removeFromWishlist: (
     id: string,
     user: any,
     location: string,
     deviceInfo: string
   ) => void;
-
   clearWishlist: () => void;
 }
 
+// --------------------------
+// STORE
+// --------------------------
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
@@ -89,7 +91,7 @@ export const useStore = create<StoreState>()(
       // CART
       // --------------------------
       addToCart: (product, user, location, deviceInfo) =>
-        set((state: StoreState) => {
+        set((state) => {
           const exists = state.cart.find((p) => p.id === product.id);
 
           const trackingInfo: TrackingInfo = {
@@ -99,15 +101,24 @@ export const useStore = create<StoreState>()(
             user,
           };
 
+          // Kafka: add to cart
+          if (location && deviceInfo) {
+            sendKafkaEvent({
+              userId: user?.id || 'guest',
+              productId: product.id,
+              action: 'add_to_cart',
+              shopId: product.shopId,
+              country: user?.country || 'unknown',
+              city: location || 'unknown',
+              device: deviceInfo || 'unknown',
+            });
+          }
+
           if (exists) {
             return {
               cart: state.cart.map((p) =>
                 p.id === product.id
-                  ? {
-                      ...p,
-                      quantity: (p.quantity || 1) + 1,
-                      trackingInfo, // Update tracking info on each add
-                    }
+                  ? { ...p, quantity: p.quantity + 1, trackingInfo }
                   : p
               ),
             };
@@ -131,54 +142,75 @@ export const useStore = create<StoreState>()(
         }),
 
       decreaseQuantity: (id, user, location, deviceInfo) =>
-        set((state) => {
-          return {
-            cart: state.cart
-              .map((product) => {
-                if (product.id !== id) return product;
+        set((state) => ({
+          cart: state.cart
+            .map((product) => {
+              if (product.id !== id) return product;
 
-                // Build tracking info on quantity change
-                const trackingInfo = {
-                  addedAt: product.trackingInfo.addedAt,
-                  updatedAt: new Date(),
+              const newQuantity = product.quantity - 1;
+
+              if (newQuantity <= 0) return null;
+
+              // Kafka: decrease quantity
+              if (location && deviceInfo) {
+                sendKafkaEvent({
+                  userId: user?.id || 'guest',
+                  productId: product.id,
+                  action: 'decrease_cart_quantity',
+                  shopId: product.shopId,
+                  country: user?.country || 'unknown',
+                  city: location || 'unknown',
+                  device: deviceInfo || 'unknown',
+                });
+              }
+
+              return {
+                ...product,
+                quantity: newQuantity,
+                trackingInfo: {
+                  ...product.trackingInfo,
                   user,
                   location,
                   deviceInfo,
-                  change: "decrease",
-                };
+                },
+              };
+            })
+            .filter(Boolean) as CartItem[],
+        })),
 
-                // Reduce quantity
-                const newQuantity = (product.quantity || 1) - 1;
+      removeFromCart: (id, user, location, deviceInfo) =>
+        set((state) => {
+          const removed = state.cart.find((p) => p.id === id);
 
-                // If quantity becomes 0 → remove later (filter handles it)
-                if (newQuantity <= 0) {
-                  return null;
-                }
+          if (removed && location && deviceInfo) {
+            sendKafkaEvent({
+              userId: user?.id || 'guest',
+              productId: removed.id,
+              action: 'remove_from_cart',
+              shopId: removed.shopId,
+              country: user?.country || 'unknown',
+              city: location || 'unknown',
+              device: deviceInfo || 'unknown',
+            });
+          }
 
-                return {
-                  ...product,
-                  quantity: newQuantity,
-                  trackingInfo,
-                };
-              })
-              .filter((p) => p !== null), // remove products with 0 qty
+          return {
+            cart: state.cart.filter((p) => p.id !== id),
           };
         }),
 
-      removeFromCart: (id, user, location, deviceInfo) =>
-        set((state) => ({
-          cart: state.cart.filter((product) => product.id !== id),
-        })),
-
-      clearCart: () => set({ cart: [] }),
+      clearCart: () => {
+        set({ cart: [] });
+      },
 
       // --------------------------
       // WISHLIST
       // --------------------------
       addToWishlist: (product, user, location, deviceInfo) =>
         set((state) => {
-          const exists = state.wishlist.some((p) => p.id === product.id);
-          if (exists) return { wishlist: state.wishlist };
+          if (state.wishlist.some((p) => p.id === product.id)) {
+            return { wishlist: state.wishlist };
+          }
 
           const trackingInfo: TrackingInfo = {
             addedAt: new Date(),
@@ -187,26 +219,47 @@ export const useStore = create<StoreState>()(
             user,
           };
 
+          // Kafka: add to wishlist
+          if (location && deviceInfo) {
+            sendKafkaEvent({
+              userId: user?.id || 'guest',
+              productId: product.id,
+              action: 'add_to_wishlist',
+              shopId: product.shopId,
+              country: user?.country || 'unknown',
+              city: location || 'unknown',
+              device: deviceInfo || 'unknown',
+            });
+          }
+
           return {
-            wishlist: [
-              ...state.wishlist,
-              {
-                ...product,
-                trackingInfo,
-              },
-            ],
+            wishlist: [...state.wishlist, { ...product, trackingInfo }],
           };
         }),
 
       removeFromWishlist: (id, user, location, deviceInfo) =>
-        set((state) => ({
-          wishlist: state.wishlist.filter((product) => product.id !== id),
-        })),
+        set((state) => {
+          const removedProduct = state.wishlist.find((p) => p.id === id);
+
+          if (removedProduct && location && deviceInfo) {
+            sendKafkaEvent({
+              userId: user?.id || 'guest',
+              productId: removedProduct.id,
+              action: 'remove_from_wishlist',
+              shopId: removedProduct.shopId,
+              country: user?.country || 'unknown',
+              city: location || 'unknown',
+              device: deviceInfo || 'unknown',
+            });
+          }
+
+          return {
+            wishlist: state.wishlist.filter((p) => p.id !== id),
+          };
+        }),
 
       clearWishlist: () => set({ wishlist: [] }),
     }),
-    {
-      name: 'user-storage',
-    }
+    { name: 'user-storage' }
   )
 );

@@ -19,7 +19,7 @@ module.exports = {
     alias: {
       '@packages': path.resolve(__dirname, '../../packages'),
     },
-    extensions: ['.ts', '.js', '.json'], 
+    extensions: ['.ts', '.js', '.json'], // ✅ include .json
   },
 
   module: {

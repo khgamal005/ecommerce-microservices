@@ -2,102 +2,82 @@
   "name": "@my-app/kafka-service",
   "version": "0.0.1",
   "private": true,
+  "scripts": {
+    "dev": "node dist/apps/kafka-service/main.js"
+  },
   "nx": {
+    "name": "kafka-service",
+    "sourceRoot": "apps/kafka-service/src",
+    "projectType": "application",
     "targets": {
-      "build": {
-        "executor": "@nx/esbuild:esbuild",
-        "outputs": [
-          "{options.outputPath}"
-        ],
-        "defaultConfiguration": "production",
-        "options": {
-          "platform": "node",
-          "outputPath": "kafka-service/dist",
-          "format": [
-            "cjs"
-          ],
-          "bundle": false,
-          "main": "kafka-service/src/main.ts",
-          "tsConfig": "kafka-service/tsconfig.app.json",
-          "assets": [
-            "kafka-service/src/assets"
-          ],
-          "esbuildOptions": {
-            "sourcemap": true,
-            "outExtension": {
-              ".js": ".js"
-            }
-          }
-        },
-        "configurations": {
-          "development": {},
-          "production": {
-            "esbuildOptions": {
-              "sourcemap": false,
-              "outExtension": {
-                ".js": ".js"
-              }
-            }
-          }
-        }
-      },
-      "prune-lockfile": {
-        "dependsOn": [
-          "build"
-        ],
-        "cache": true,
-        "executor": "@nx/js:prune-lockfile",
-        "outputs": [
-          "{workspaceRoot}/kafka-service/dist/package.json",
-          "{workspaceRoot}/kafka-service/dist/package-lock.json"
-        ],
-        "options": {
-          "buildTarget": "build"
-        }
-      },
-      "copy-workspace-modules": {
-        "dependsOn": [
-          "build"
-        ],
-        "cache": true,
-        "outputs": [
-          "{workspaceRoot}/kafka-service/dist/workspace_modules"
-        ],
-        "executor": "@nx/js:copy-workspace-modules",
-        "options": {
-          "buildTarget": "build"
-        }
-      },
-      "prune": {
-        "dependsOn": [
-          "prune-lockfile",
-          "copy-workspace-modules"
-        ],
-        "executor": "nx:noop"
-      },
       "serve": {
-        "continuous": true,
         "executor": "@nx/js:node",
         "defaultConfiguration": "development",
-        "dependsOn": [
-          "build"
-        ],
+        "dependsOn": ["build"],
         "options": {
-          "buildTarget": "@my-app/kafka-service:build",
-          "runBuildTargetDependencies": false
+          "buildTarget": "kafka-service:build",
+          "runBuildTargetDependencies": false,
+          "inspect": false
         },
         "configurations": {
           "development": {
-            "buildTarget": "@my-app/kafka-service:build:development"
+            "buildTarget": "kafka-service:build:development"
           },
           "production": {
-            "buildTarget": "@my-app/kafka-service:build:production"
+            "buildTarget": "kafka-service:build:production"
+          }
+        }
+      },
+      "build": {
+        "executor": "@nx/esbuild:esbuild",
+        "outputs": ["{options.outputPath}"],
+        "defaultConfiguration": "production",
+        "options": {
+          "platform": "node",
+          "outputPath": "dist/apps/kafka-service",
+          "format": ["cjs"],
+          "bundle": true,
+          "main": "apps/kafka-service/src/main.ts",
+          "tsConfig": "apps/kafka-service/tsconfig.app.json",
+          "assets": [
+            "apps/kafka-service/src/assets",
+            {
+              "input": "node_modules/.prisma/client",
+              "glob": "**/*",
+              "output": "./"
+            },
+            {
+              "input": "node_modules/@prisma/engines",
+              "glob": "**/*",
+              "output": "./"
+            }
+          ],
+          "esbuildOptions": {
+            "sourcemap": true,
+            "outExtension": { ".js": ".js" },
+            "external": ["@prisma/client", ".prisma", "@prisma/engines"],
+            "plugins": []
+          }
+        },
+        "configurations": {
+          "development": {
+            "esbuildOptions": {
+              "sourcemap": true,
+              "external": ["@prisma/client", ".prisma", "@prisma/engines"]
+            }
+          },
+          "production": {
+            "esbuildOptions": {
+              "sourcemap": false,
+              "external": ["@prisma/client", ".prisma", "@prisma/engines"]
+            }
           }
         }
       }
     }
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "kafkajs": "^2.2.4"
   }
 }
