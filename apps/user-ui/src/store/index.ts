@@ -21,7 +21,7 @@ interface Product {
 interface TrackingInfo {
   addedAt: Date;
   deviceInfo: string;
-  location: string;
+  location: { country: string; city: string };
   user: any;
 }
 
@@ -46,19 +46,19 @@ interface StoreState {
   addToCart: (
     product: Product,
     user: any,
-    location: string,
+  location: { country: string; city: string },
     deviceInfo: string
   ) => void;
   removeFromCart: (
     id: string,
     user: any,
-    location: string,
+  location: { country: string; city: string },
     deviceInfo: string
   ) => void;
   decreaseQuantity: (
     id: string,
     user: any,
-    location: string,
+  location: { country: string; city: string },
     deviceInfo: string
   ) => void;
   clearCart: (user?: any) => void;
@@ -66,13 +66,13 @@ interface StoreState {
   addToWishlist: (
     product: Product,
     user: any,
-    location: string,
+  location: { country: string; city: string },
     deviceInfo: string
   ) => void;
   removeFromWishlist: (
     id: string,
     user: any,
-    location: string,
+  location: { country: string; city: string },
     deviceInfo: string
   ) => void;
   clearWishlist: () => void;
@@ -90,29 +90,29 @@ export const useStore = create<StoreState>()(
       // --------------------------
       // CART
       // --------------------------
-      addToCart: (product, user, location, deviceInfo) =>
-        set((state) => {
-          const exists = state.cart.find((p) => p.id === product.id);
+addToCart: (product: Product, user: any, location: { country: string; city: string }, deviceInfo: string) =>
+    set((state) => {
+      const exists = state.cart.find((p) => p.id === product.id);
 
-          const trackingInfo: TrackingInfo = {
-            addedAt: new Date(),
-            deviceInfo,
-            location,
-            user,
-          };
+      const trackingInfo: TrackingInfo = {
+        addedAt: new Date(),
+        deviceInfo,
+        location,  // Now matches the expected type
+        user,
+      };
 
-          // Kafka: add to cart
-          if (location && deviceInfo) {
-            sendKafkaEvent({
-              userId: user?.id || 'guest',
-              productId: product.id,
-              action: 'add_to_cart',
-              shopId: product.shopId,
-              country: user?.country || 'unknown',
-              city: location || 'unknown',
-              device: deviceInfo || 'unknown',
-            });
-          }
+      // Kafka: add to cart
+      if (location && deviceInfo) {
+        sendKafkaEvent({
+          userId: user?.id || 'guest',
+          productId: product.id,
+          action: 'add_to_cart',
+          shopId: product.shopId,
+          country: location.country || 'unknown',
+          city: location.city || 'unknown',
+          device: deviceInfo || 'unknown',
+        });
+      }
 
           if (exists) {
             return {
@@ -151,18 +151,18 @@ export const useStore = create<StoreState>()(
 
               if (newQuantity <= 0) return null;
 
-              // Kafka: decrease quantity
-              if (location && deviceInfo) {
-                sendKafkaEvent({
-                  userId: user?.id || 'guest',
-                  productId: product.id,
-                  action: 'decrease_cart_quantity',
-                  shopId: product.shopId,
-                  country: user?.country || 'unknown',
-                  city: location || 'unknown',
-                  device: deviceInfo || 'unknown',
-                });
-              }
+              // // Kafka: decrease quantity
+              // if (location && deviceInfo) {
+              //   sendKafkaEvent({
+              //     userId: user?.id || 'guest',
+              //     productId: product.id,
+              //     action: 'decrease_cart_quantity',
+              //     shopId: product.shopId,
+              //     country: user?.country || 'unknown',
+              //     city: location || 'unknown',
+              //     device: deviceInfo || 'unknown',
+              //   });
+              // }
 
               return {
                 ...product,
@@ -188,8 +188,8 @@ export const useStore = create<StoreState>()(
               productId: removed.id,
               action: 'remove_from_cart',
               shopId: removed.shopId,
-              country: user?.country || 'unknown',
-              city: location || 'unknown',
+              country: location?.country || 'unknown',
+              city: location.city || 'unknown',
               device: deviceInfo || 'unknown',
             });
           }
@@ -226,8 +226,8 @@ export const useStore = create<StoreState>()(
               productId: product.id,
               action: 'add_to_wishlist',
               shopId: product.shopId,
-              country: user?.country || 'unknown',
-              city: location || 'unknown',
+              country: location?.country || 'unknown',
+              city: location.city || 'unknown',
               device: deviceInfo || 'unknown',
             });
           }
@@ -247,8 +247,8 @@ export const useStore = create<StoreState>()(
               productId: removedProduct.id,
               action: 'remove_from_wishlist',
               shopId: removedProduct.shopId,
-              country: user?.country || 'unknown',
-              city: location || 'unknown',
+              country: location?.country || 'unknown',
+              city: location.city || 'unknown',
               device: deviceInfo || 'unknown',
             });
           }

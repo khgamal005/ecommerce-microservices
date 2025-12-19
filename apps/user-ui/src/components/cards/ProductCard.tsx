@@ -19,7 +19,14 @@ interface ProductCardProps {
   isEvent?: boolean;
   showShop?: boolean;
 }
-
+interface LocationInfo {
+  country: string | null;
+  city: string | null;
+  ip: string;
+  latitude: number;
+  longitude: number;
+  loading: boolean;
+}
 function ProductCard({
   product,
   isEvent = false,
@@ -46,6 +53,7 @@ function ProductCard({
   
   const locationData = useLocationTracking(); 
   const deviceData = useDeviceTracking(); 
+  console.log('locationData', locationData);
 
   // Check if product is in wishlist
   const isWishlisted = wishlist.some((item) => item.id === product.id);
@@ -54,7 +62,10 @@ function ProductCard({
   const cartItem = cart.find((item) => item.id === product.id);
   const cartQuantity = cartItem?.quantity || 0;
 
-
+const safeLocation = {
+  country: locationData?.country || 'unknown',
+  city: locationData?.city || 'unknown',
+};
 
 
   useEffect(() => {
@@ -97,12 +108,12 @@ function ProductCard({
 
     try {
       if (isWishlisted) {
-        removeFromWishlist(product.id, user, locationData?.city ?? '', deviceData);
+        removeFromWishlist(product.id, user, safeLocation , deviceData);
       } else {
         // Create a complete product object matching the store interface
 
 
-        addToWishlist(productForStore, user, locationData?.city ?? '', deviceData);
+        addToWishlist(productForStore, user,safeLocation, deviceData);
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
@@ -129,7 +140,7 @@ const handleQuickAddToCart = (e: React.MouseEvent) => {
   addToCart(
     formatProductForCart(product),
     user,
-    locationData?.city ?? '',
+    safeLocation,
     deviceData
   );
 };
@@ -149,7 +160,7 @@ const handleAddToCart = (e: React.MouseEvent) => {
   addToCart(
     formatProductForCart(product),
     user,
-    locationData?.city ?? '',
+    safeLocation,
     deviceData
   );
 };

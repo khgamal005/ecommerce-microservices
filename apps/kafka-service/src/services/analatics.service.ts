@@ -293,6 +293,9 @@ export const updateUserAnalytics = async (event: any) => {
       where: {
         userId: event.userId,
       },
+      select: {
+        actions: true,
+      }
     });
 
     let updatedActions: any = existingData?.actions || [];
@@ -330,9 +333,7 @@ export const updateUserAnalytics = async (event: any) => {
         (entry: any) =>
           !(entry.productId === event.productId && entry.action === 'add_to_wishlist')
       );
-    } else if (event.action === 'decrease_cart_quantity') {
-      // For decrease_cart_quantity, we just record it but don't remove from cart
-      updatedActions.push(actionEntry);
+    
     } else if (event.action === 'clear_cart') {
       // For clear_cart, remove ALL add_to_cart entries for this user
       updatedActions = updatedActions.filter(
@@ -404,8 +405,7 @@ export const updateProductAnalytics = async (event: any) => {
       updatedFields.removeFromCart = { increment: 1 };
     } else if (event.action === 'remove_from_wishlist') {
       updatedFields.removeFromWishlist = { increment: 1 };
-    } else if (event.action === 'decrease_cart_quantity') {
-      updatedFields.quantityDecreases = { increment: 1 };
+    
     } else if (event.action === 'purchase') {
       updatedFields.purchases = { increment: 1 };
     }

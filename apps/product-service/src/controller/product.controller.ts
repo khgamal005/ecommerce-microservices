@@ -638,3 +638,27 @@ export const getAllProducts = async (
       .json({ message: 'Internal server error', error: error.message });
   }
 };
+
+
+// routes/product.ts (Backend)
+export const getProductDetails = async (req: Request, res: Response, next: NextFunction) => {
+  const { slug } = req.params; // Changed from productId to slug
+  
+  const product = await prisma.product.findUnique({
+    where: { slug },
+    include: { 
+      images: true, 
+    },
+  });
+  
+  if (!product) {
+    return res.status(404).json({ 
+      message: 'Product not found' 
+    });
+  }
+  
+  return res.status(200).json({ 
+    message: 'Product fetched successfully', 
+    product 
+  });
+}
