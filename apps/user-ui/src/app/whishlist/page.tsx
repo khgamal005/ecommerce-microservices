@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -9,17 +9,24 @@ import {
   Eye,
   ChevronRight,
   ArrowLeft,
-  Star,
-  Package,
-  Clock,
-  MapPin,
-  Store,
+
 } from 'lucide-react';
 import { useStore } from '../../store';
 import toast from 'react-hot-toast';
+import useLocationTracking from '../../hooks/useLocationTracking';
+import { CleanLocationInfo } from '../../types/Product';
 
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist, addToCart } = useStore();
+    const locationData = useLocationTracking(); 
+
+  const safeLocation: CleanLocationInfo = {
+    ip: locationData?.ip ?? '0.0.0.0',
+    latitude: locationData?.latitude ?? 0,
+    longitude: locationData?.longitude ?? 0,
+    country: locationData?.country ?? 'unknown',
+    city: locationData?.city ?? 'unknown',
+  };
 
   // Get user and location info for tracking
   const getUserInfo = () => {
@@ -35,23 +42,21 @@ export default function WishlistPage() {
   const handleRemoveFromWishlist = (id: string) => {
     const user = getUserInfo();
     const deviceInfo = navigator.userAgent;
-    const location = 'wishlist-page'; // You can get actual location if needed
 
     if (user) {
-      removeFromWishlist(id, user, location, deviceInfo);
+      removeFromWishlist(id, user, safeLocation, deviceInfo);
     } else {
       // Fallback if no user found
-      removeFromWishlist(id, null, location, deviceInfo);
+      removeFromWishlist(id, null, safeLocation, deviceInfo);
     }
   };
 
   const handleAddToCart = (product: any) => {
     const user = getUserInfo();
     const deviceInfo = navigator.userAgent;
-    const location = 'wishlist-page';
 
     if (user) {
-      addToCart(product, user, location, deviceInfo);
+      addToCart(product, user, safeLocation, deviceInfo);
       toast.success(`${product.title} added to cart!`);
     } else {
       toast.error('Please login to add items to cart');
@@ -61,7 +66,6 @@ export default function WishlistPage() {
   const handleMoveAllToCart = () => {
     const user = getUserInfo();
     const deviceInfo = navigator.userAgent;
-    const location = 'wishlist-page';
 
     if (!user) {
       toast.error('Please login to add items to cart');
@@ -70,7 +74,7 @@ export default function WishlistPage() {
 
     let addedCount = 0;
     wishlist.forEach((product) => {
-      addToCart(product, user, location, deviceInfo);
+      addToCart(product, user, safeLocation, deviceInfo);
       addedCount++;
     });
 
@@ -166,7 +170,7 @@ export default function WishlistPage() {
                         {/* Product Image */}
                         <div className="relative w-full sm:w-48 h-48 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                           <Image
-                            src={item.images || '/placeholder.jpg'}
+                            src={item.image || '/placeholder.jpg'}
                             alt={item.title}
                             fill
                             className="object-cover"
@@ -192,32 +196,14 @@ export default function WishlistPage() {
                                 <div>
                                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                     <Link
-                                      href={`/product/${item.id}`}
+                                      href={`/product/${item.slug}`}
                                       className="hover:text-blue-600"
                                     >
                                       {item.title}
                                     </Link>
                                   </h3>
 
-                                  {/* Rating */}
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <div className="flex items-center gap-1">
-                                      {[...Array(5)].map((_, i) => (
-                                        <Star
-                                          key={i}
-                                          size={14}
-                                          className={`${
-                                            i < Math.floor(item.rating)
-                                              ? 'fill-yellow-400 text-yellow-400'
-                                              : 'fill-gray-200 text-gray-200'
-                                          }`}
-                                        />
-                                      ))}
-                                    </div>
-                                    <span className="text-sm text-gray-500">
-                                      ({item.rating.toFixed(1)})
-                                    </span>
-                                  </div>
+
                                 </div>
 
                                 {/* Price */}
@@ -244,47 +230,43 @@ export default function WishlistPage() {
                                 </div>
                               </div>
 
-                              {/* Colors */}
-                              {item.colors && item.colors.length > 0 && (
-                                <div className="mb-4">
-                                  <p className="text-sm text-gray-600 mb-2">
-                                    Colors:
-                                  </p>
-                                  <div className="flex gap-2">
-                                    {item.colors.map((color, index) => (
+                              {/* Colors and Sizes */}
+                              <div className="flex flex-wrap gap-4 mb-4">
+                                {/* Selected Color */}
+                                {item.selectedColor && (
+                                  <div>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                      Color:
+                                    </p>
+                                    <div className="flex gap-2">
                                       <div
-                                        key={index}
-                                        className="w-6 h-6 rounded-full border border-gray-300"
-                                        style={{ backgroundColor: color }}
-                                        title={`Color ${index + 1}`}
+                                        className="w-6 h-6 rounded-full border border-gray-300 shadow-sm"
+                                        style={{
+                                          backgroundColor: item.selectedColor,
+                                        }}
+                                        title={`Color ${item.selectedColor}`}
                                       />
-                                    ))}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
 
-                              {/* Added Info */}
-                              {item.trackingInfo && (
-                                <div className="text-sm text-gray-500 space-y-1 mt-4">
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="w-4 h-4" />
-                                    <span>
-                                      Added on{' '}
-                                      {new Date(
-                                        item.trackingInfo.addedAt
-                                      ).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                  {item.trackingInfo.location && (
-                                    <div className="flex items-center gap-2">
-                                      <MapPin className="w-4 h-4" />
-                                      <span>
-                                        From {item.trackingInfo.location}
+                                {/* Selected Size */}
+                                {item.selectedSize && (
+                                  <div>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                      Size:
+                                    </p>
+                                    <div className="flex gap-2">
+                                      <span className="px-2 py-1 text-xs border border-gray-300 rounded">
+                                        {item.selectedSize}
                                       </span>
                                     </div>
-                                  )}
-                                </div>
-                              )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Added Info */}
+
                             </div>
 
                             {/* Actions */}
@@ -304,13 +286,6 @@ export default function WishlistPage() {
                                   : 'Out of Stock'}
                               </button>
 
-                              <Link
-                                href={`/product/${item.id}`}
-                                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                              >
-                                <Eye className="w-5 h-5" />
-                                View Details
-                              </Link>
 
                               <button
                                 onClick={() =>

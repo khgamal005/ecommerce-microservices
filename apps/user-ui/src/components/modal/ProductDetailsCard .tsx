@@ -7,11 +7,11 @@ import useLocationTracking from '../../hooks/useLocationTracking';
 import useDeviceTracking from '../../hooks/useDeviceTracking';
 import useUser from '../../hooks/use-user';
 import { formatProductForStore } from '../../utils/formatProductForStore';
-import { ProductDetails } from '../../types/Product';
+import { ProductDetailsInfo } from '../../types/Product';
 import toast from 'react-hot-toast';
 
 interface ProductDetailsCardProps {
-  data: ProductDetails;
+  data: ProductDetailsInfo;
   setIsQuickViewOpen: (open: boolean) => void;
 }
 
@@ -44,7 +44,10 @@ function ProductDetailsCard({
 
   // Check if product is in wishlist
   const isWishlisted = wishlist.some((item) => item.id === data.id);
-
+  const safeLocation = {
+    country: locationData?.country || 'unknown',
+    city: locationData?.city || 'unknown',
+  };
   // Check if product is in cart and get its quantity
   const cartItem = cart.find((item) => item.id === data.id);
   const currentCartQuantity = cartItem?.quantity || 0;
@@ -94,97 +97,76 @@ function ProductDetailsCard({
     };
   }, []);
 
-  const handleWishlistToggle = () => {
-    // If user is not logged in, redirect to login
-    if (!user) {
-      router.push(
-        '/login?redirect=' + encodeURIComponent(window.location.pathname)
-      );
-      return;
-    }
+  // const handleIncrement = () => {
+  //   if (!user) {
+  //     router.push(
+  //       '/login?redirect=' + encodeURIComponent(window.location.pathname)
+  //     );
+  //     return;
+  //   }
 
-    if (isWishlisted) {
-      removeFromWishlist(data.id, user, locationData?.city ?? '', deviceData);
-    } else {
-      addToWishlist(
-        productForStore,
-        user,
-        locationData?.city ?? '',
-        deviceData
-      );
-    }
-  };
+  //   // Check if we can add more based on stock
+  //   if (currentCartQuantity >= data.stock) {
+  //     alert();
+  //     toast.success(`Only ${data.stock} items available in stock`);
 
-  const handleIncrement = () => {
-    if (!user) {
-      router.push(
-        '/login?redirect=' + encodeURIComponent(window.location.pathname)
-      );
-      return;
-    }
+  //     return;
+  //   }
 
-    // Check if we can add more based on stock
-    if (currentCartQuantity >= data.stock) {
-      alert();
-      toast.success(`Only ${data.stock} items available in stock`);
+  //   // Use addToCart to increment quantity
+  //   addToCart(productForStore, user, safeLocation, deviceData);
+  // };
 
-      return;
-    }
+  // const handleDecrement = () => {
+  //   if (!user) {
+  //     router.push(
+  //       '/login?redirect=' + encodeURIComponent(window.location.pathname)
+  //     );
+  //     return;
+  //   }
 
-    // Use addToCart to increment quantity
-    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
-  };
+  //   if (currentCartQuantity > 1) {
+  //     // If quantity > 1, decrease by 1
+  //     decreaseQuantity(data.id, user, safeLocation, deviceData);
+  //   } else if (currentCartQuantity === 1) {
+  //     // If quantity = 1, remove from cart completely
+  //     removeFromCart(data.id, user, safeLocation, deviceData);
+  //   }
+  // };
 
-  const handleDecrement = () => {
-    if (!user) {
-      router.push(
-        '/login?redirect=' + encodeURIComponent(window.location.pathname)
-      );
-      return;
-    }
+  // const handleAddToCart = () => {
+  //   if (!user) {
+  //     router.push(
+  //       '/login?redirect=' + encodeURIComponent(window.location.pathname)
+  //     );
+  //     return;
+  //   }
 
-    if (currentCartQuantity > 1) {
-      // If quantity > 1, decrease by 1
-      decreaseQuantity(data.id, user, locationData?.city ?? '', deviceData);
-    } else if (currentCartQuantity === 1) {
-      // If quantity = 1, remove from cart completely
-      removeFromCart(data.id, user, locationData?.city ?? '', deviceData);
-    }
-  };
+  //   if (data.stock === 0 || maxQuantityToAdd <= 0) return;
 
-  const handleAddToCart = () => {
-    if (!user) {
-      router.push(
-        '/login?redirect=' + encodeURIComponent(window.location.pathname)
-      );
-      return;
-    }
+  //   // Add one item to cart (or add to existing quantity via addToCart)
+  //   addToCart(productForStore, user, safeLocation, deviceData);
 
-    if (data.stock === 0 || maxQuantityToAdd <= 0) return;
+  //   setIsQuickViewOpen(false);
+  //   toast.success('Added to cart!');
+  // };
 
-    // Add one item to cart (or add to existing quantity via addToCart)
-    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
+  // const handleBuyNow = () => {
+  //   if (!user) {
+  //     router.push(
+  //       '/login?redirect=' + encodeURIComponent(window.location.pathname)
+  //     );
+  //     return;
+  //   }
 
-    setIsQuickViewOpen(false);
-    toast.success('Added to cart!');
-  };
+  //   if (data.stock === 0 || maxQuantityToAdd <= 0) return;
 
-  const handleBuyNow = () => {
-    if (!user) {
-      router.push(
-        '/login?redirect=' + encodeURIComponent(window.location.pathname)
-      );
-      return;
-    }
+  //   // Add to cart first
+  //   addToCart(productForStore, user, safeLocation, deviceData);
 
-    if (data.stock === 0 || maxQuantityToAdd <= 0) return;
-
-    // Add to cart first
-    addToCart(productForStore, user, locationData?.city ?? '', deviceData);
-
-    setIsQuickViewOpen(false);
-    router.push('/checkout');
-  };
+  //   setIsQuickViewOpen(false);
+  //   router.push('/checkout');
+  // };
 
   // If user data is loading, you can show a loading state or nothing
   if (userLoading) {
@@ -337,7 +319,7 @@ function ProductDetailsCard({
                 {/* Sizes */}
                 {data.sizes && data.sizes.length > 0 && (
                   <div className="space-y-3 pt-6 border-t">
-                    <p className="font-medium text-gray-900">Select Size</p>
+                    <p className="font-medium text-gray-900">Sizes</p>
                     <div className="grid grid-cols-5 gap-2 max-w-xs">
                       {data.sizes.map((size, index) => (
                         <button
@@ -356,104 +338,6 @@ function ProductDetailsCard({
                   </div>
                 )}
 
-                {/* Quantity Selector - Updated to match cart page */}
-                <div className="space-y-2 pt-4 border-t">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-gray-900">Quantity</p>
-                    {!user && (
-                      <p className="text-sm text-red-600">
-                        Please login to adjust quantity
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center border border-gray-300 rounded-lg">
-                      <button
-                        onClick={handleDecrement}
-                        disabled={currentCartQuantity <= 0 || !user}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
-                      >
-                        -
-                      </button>
-                      <span className="px-4 py-2 border-x border-gray-300 min-w-[60px] text-center">
-                        {currentCartQuantity || 0}
-                      </span>
-                      <button
-                        onClick={handleIncrement}
-                        disabled={currentCartQuantity >= data.stock || !user}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <span className="text-sm text-gray-500">
-                      {data.stock} items available
-                      {currentCartQuantity > 0 && (
-                        <span className="text-blue-600 ml-1">
-                          ({currentCartQuantity} in cart)
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={
-                      !user || data.stock === 0 || maxQuantityToAdd <= 0
-                    }
-                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    title={!user ? 'Please login to add to cart' : ''}
-                  >
-                    <ShoppingBag size={20} />
-                    {!user
-                      ? 'Login to Add'
-                      : data.stock > 0
-                      ? maxQuantityToAdd > 0
-                        ? currentCartQuantity > 0
-                          ? 'Add More to Cart'
-                          : 'Add to Cart'
-                        : 'Max Stock Reached'
-                      : 'Out of Stock'}
-                  </button>
-
-                  <button
-                    onClick={handleBuyNow}
-                    disabled={
-                      !user || data.stock === 0 || maxQuantityToAdd <= 0
-                    }
-                    className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    title={!user ? 'Please login to buy now' : ''}
-                  >
-                    {!user
-                      ? 'Login to Buy'
-                      : currentCartQuantity > 0
-                      ? 'Checkout Now'
-                      : 'Buy Now'}
-                  </button>
-
-                  <button
-                    onClick={handleWishlistToggle}
-                    disabled={!user}
-                    className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label={
-                      isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'
-                    }
-                    title={!user ? 'Please login to use wishlist' : ''}
-                  >
-                    <Heart
-                      size={20}
-                      className={
-                        isWishlisted
-                          ? 'fill-red-500 text-red-500'
-                          : 'text-gray-600'
-                      }
-                    />
-                  </button>
-                </div>
-
                 {/* Shop Information */}
                 {data.shop && (
                   <div className="pt-6 border-t">
@@ -471,7 +355,7 @@ function ProductDetailsCard({
                       </div>
                       <button
                         onClick={() =>
-                          router.push(`/inbox/shopId=${data?.shop?.id}`)
+                          router.push(`/inbox/shopId=${data?.shopId}`)
                         }
                         className="flex items-center gap-2 px-4 py-2 bg-blue-50
                          hover:bg-blue-100 text-blue-700 hover:text-blue-900 font-medium rounded-lg border

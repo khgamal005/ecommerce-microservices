@@ -41,20 +41,49 @@ export interface Product extends BaseProduct {
 }
 
 // Cart product
-export interface CartProduct extends BaseProduct {
-  brand: string | null;
-  warranty: number | null;
-  sizes: string[] | false;
-  cashOnDelivery: boolean;
-  images: string;
+export interface CartProduct {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
   shopId: string;
-  ending_date: Date | null;
-  createdAt: string | null;
+stock: number;
+  regular_price: number;
+  sale_price: number;
+
+  selectedSize: string;
+  selectedColor?: string;
+
+  image: string;
+
+  // metadata
+  brand: string;
+  warranty: number;
+  cashOnDelivery: boolean;
+
+  // cart logic
   quantity: number;
 }
 
-export interface ProductDetails {
+
+export interface LocationInfo {
+  country: string | null;
+  city: string | null;
+  ip: string;
+  latitude: number;
+  longitude: number;
+  loading: boolean;
+}
+
+export type CleanLocationInfo = Omit<LocationInfo, 'loading' | 'country' | 'city'> & {
+  country: string;
+  city: string;
+};
+
+
+export interface ProductDetailsInfo {
   id: string;
+  shopId: string;
   title: string;
   slug: string;
   category: string;
@@ -69,7 +98,7 @@ export interface ProductDetails {
   brand: string;
   stock: number;
   warranty: number;
-  cashOnDelivery: string;
+  cashOnDelivery: boolean;
   sizes: string[];
   ending_date: Date;
   createdAt: string;
@@ -81,3 +110,4 @@ export interface ProductDetails {
     category?: string;
   };
 }
+

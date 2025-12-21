@@ -26,6 +26,7 @@ import useUser from '../../hooks/use-user';
 import useLocationTracking from '../../hooks/useLocationTracking';
 import useDeviceTracking from '../../hooks/useDeviceTracking';
 import toast from 'react-hot-toast';
+import { CleanLocationInfo } from '../../types/Product';
 
 export default function CartPage() {
   const { cart, removeFromCart, decreaseQuantity, addToCart, clearCart } =
@@ -46,6 +47,14 @@ export default function CartPage() {
 
   const locationData = useLocationTracking();
   const deviceData = useDeviceTracking();
+
+  const safeLocation: CleanLocationInfo = {
+    ip: locationData?.ip ?? '0.0.0.0',
+    latitude: locationData?.latitude ?? 0,
+    longitude: locationData?.longitude ?? 0,
+    country: locationData?.country ?? 'unknown',
+    city: locationData?.city ?? 'unknown',
+  };
 
   // Calculate totals
   const subtotal = cart.reduce((total, item) => {
@@ -70,7 +79,7 @@ export default function CartPage() {
     }
 
     // Use addToCart to increment quantity
-    addToCart(item, user, locationData?.city ?? '', deviceData);
+    addToCart(item, user, safeLocation, deviceData);
   };
 
   const handleDecrement = (itemId: string) => {
@@ -79,15 +88,15 @@ export default function CartPage() {
 
     if (item.quantity > 1) {
       // If quantity > 1, decrease by 1
-      decreaseQuantity(itemId, user, locationData?.city ?? '', deviceData);
+      decreaseQuantity(itemId, user, safeLocation, deviceData);
     } else {
       // If quantity = 1, remove from cart completely
-      removeFromCart(itemId, user, locationData?.city ?? '', deviceData);
+      removeFromCart(itemId, user, safeLocation, deviceData);
     }
   };
 
   const handleRemoveItem = (itemId: string) => {
-    removeFromCart(itemId, user, locationData?.city ?? '', deviceData);
+    removeFromCart(itemId, user, safeLocation, deviceData);
   };
 
   const handleClearCart = () => {
@@ -294,7 +303,7 @@ export default function CartPage() {
                           </button>
                           <div className="relative w-32 h-32 rounded-xl overflow-hidden bg-gray-100 ml-4">
                             <Image
-                              src={item.images || '/placeholder.jpg'}
+                              src={item.image || '/placeholder.jpg'}
                               alt={item.title}
                               fill
                               className="object-cover"
@@ -382,43 +391,34 @@ export default function CartPage() {
 
                               {/* Colors and Sizes */}
                               <div className="flex flex-wrap gap-4 mb-4">
-                                {item.colors && item.colors.length > 0 && (
+                                {/* Selected Color */}
+                                {item.selectedColor && (
                                   <div>
                                     <p className="text-sm text-gray-600 mb-2">
                                       Color:
                                     </p>
                                     <div className="flex gap-2">
-                                      {item.colors.map((color, index) => (
-                                        <div
-                                          key={index}
-                                          className="w-6 h-6 rounded-full border border-gray-300 shadow-sm"
-                                          style={{ backgroundColor: color }}
-                                          title={`Color ${index + 1}`}
-                                        />
-                                      ))}
+                                      <div
+                                        className="w-6 h-6 rounded-full border border-gray-300 shadow-sm"
+                                        style={{
+                                          backgroundColor: item.selectedColor,
+                                        }}
+                                        title={`Color ${item.selectedColor}`}
+                                      />
                                     </div>
                                   </div>
                                 )}
-                                {item.sizes && (
+
+                                {/* Selected Size */}
+                                {item.selectedSize && (
                                   <div>
                                     <p className="text-sm text-gray-600 mb-2">
                                       Size:
                                     </p>
                                     <div className="flex gap-2">
-                                      {Array.isArray(item.sizes) ? (
-                                        item.sizes.map((size, index) => (
-                                          <span
-                                            key={index}
-                                            className="px-2 py-1 text-xs border border-gray-300 rounded"
-                                          >
-                                            {size}
-                                          </span>
-                                        ))
-                                      ) : (
-                                        <span className="px-2 py-1 text-xs border border-gray-300 rounded">
-                                          One Size
-                                        </span>
-                                      )}
+                                      <span className="px-2 py-1 text-xs border border-gray-300 rounded">
+                                        {item.selectedSize}
+                                      </span>
                                     </div>
                                   </div>
                                 )}

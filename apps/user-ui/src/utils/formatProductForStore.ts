@@ -20,7 +20,7 @@ export const formatProductForStore = (
     sizes?: string[];
     cashOnDelivery?: boolean | string;
     images?: { url: string }[];
-    shop?: { id: string };
+    shopId: string;
     ending_date?: Date;
     createdAt?: string;
   },
@@ -43,7 +43,7 @@ export const formatProductForStore = (
   sizes: data.sizes?.length ? data.sizes : false,
   cashOnDelivery: Boolean(data.cashOnDelivery),
   images: data.images?.[0]?.url ?? '',
-  shopId: data.shop?.id ?? '',
+  shopId: data.shopId ?? '',
   ending_date: data.ending_date ?? null,
   createdAt: data.createdAt ?? null,
   quantity,
