@@ -129,7 +129,6 @@ interface UserEvent {
 const consumer = kafka.consumer({ groupId: 'user-events-group' });
 
 const eventQueue: UserEvent[] = [];
-let eventsProcessed = 0;
 
 // Queue processor
 async function processQueue() {
@@ -146,7 +145,6 @@ async function processQueue() {
         await updateProductAnalytics(event);
       }
 
-      eventsProcessed++;
       console.log('[QUEUE] Event processed successfully:', event.action);
     } catch (err) {
       console.error('[QUEUE] Failed to process event:', event, err);

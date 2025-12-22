@@ -81,51 +81,7 @@ export const useStore = create<StoreState>()(
       // --------------------------
       // CART
       // --------------------------
-// addToCart: (product , user, location , deviceInfo ) =>
-//     set((state) => {
-//       const exists = state.cart.find((p) => p.id === product.id);
 
-//       const trackingInfo: TrackingInfo = {
-//         addedAt: new Date(),
-//         deviceInfo,
-//         location,  // Now matches the expected type
-//         user,
-//       };
-
-//       // Kafka: add to cart
-//       if (location && deviceInfo) {
-//         sendKafkaEvent({
-//           userId: user?.id || 'guest',
-//           productId: product.id,
-//           action: 'add_to_cart',
-//           shopId: product.shopId,
-//           country: location.country || 'unknown',
-//           city: location.city || 'unknown',
-//           device: deviceInfo || 'unknown',
-//         });
-//       }
-
-//           if (exists) {
-//             return {
-//               cart: state.cart.map((p) =>
-//                 p.id === product.id
-//                   ? { ...p, quantity: p.quantity + 1, trackingInfo }
-//                   : p
-//               ),
-//             };
-//           }
-
-//           return {
-//             cart: [
-//               ...state.cart,
-//               {
-//                 ...product,
-//                 quantity: 1,
-//                 trackingInfo,
-//               },
-//             ],
-//           };
-//         }),
 addToCart: (
   product: CartProduct,
   user,
@@ -143,17 +99,17 @@ addToCart: (
     };
 
     // Kafka event
-    // if (location && deviceInfo) {
-    //   sendKafkaEvent({
-    //     userId: user?.id || 'guest',
-    //     productId: product.id,
-    //     action: 'add_to_cart',
-    //     shopId: product.shopId,
-    //     country: location.country,
-    //     city: location.city,
-    //     device: deviceInfo,
-    //   });
-    // }
+    if (location && deviceInfo) {
+      sendKafkaEvent({
+        userId: user?.id || 'guest',
+        productId: product.id,
+        action: 'add_to_cart',
+        shopId: product.shopId,
+        country: location.country,
+        city: location.city,
+        device: deviceInfo,
+      });
+    }
 
     if (exists) {
       return {
@@ -256,17 +212,17 @@ addToCart: (
           };
 
           // Kafka: add to wishlist
-          // if (location && deviceInfo) {
-          //   sendKafkaEvent({
-          //     userId: user?.id || 'guest',
-          //     productId: product.id,
-          //     action: 'add_to_wishlist',
-          //     shopId: product.shopId,
-          //     country: location?.country || 'unknown',
-          //     city: location.city || 'unknown',
-          //     device: deviceInfo || 'unknown',
-          //   });
-          // }
+          if (location && deviceInfo) {
+            sendKafkaEvent({
+              userId: user?.id || 'guest',
+              productId: product.id,
+              action: 'add_to_wishlist',
+              shopId: product.shopId,
+              country: location?.country || 'unknown',
+              city: location.city || 'unknown',
+              device: deviceInfo || 'unknown',
+            });
+          }
 
           return {
             wishlist: [...state.wishlist, { ...product, trackingInfo }],
@@ -277,17 +233,17 @@ addToCart: (
         set((state) => {
           const removedProduct = state.wishlist.find((p) => p.id === id);
 
-          // if (removedProduct && location && deviceInfo) {
-          //   sendKafkaEvent({
-          //     userId: user?.id || 'guest',
-          //     productId: removedProduct.id,
-          //     action: 'remove_from_wishlist',
-          //     shopId: removedProduct.shopId,
-          //     country: location?.country || 'unknown',
-          //     city: location.city || 'unknown',
-          //     device: deviceInfo || 'unknown',
-          //   });
-          // }
+          if (removedProduct && location && deviceInfo) {
+            sendKafkaEvent({
+              userId: user?.id || 'guest',
+              productId: removedProduct.id,
+              action: 'remove_from_wishlist',
+              shopId: removedProduct.shopId,
+              country: location?.country || 'unknown',
+              city: location.city || 'unknown',
+              device: deviceInfo || 'unknown',
+            });
+          }
 
           return {
             wishlist: state.wishlist.filter((p) => p.id !== id),
