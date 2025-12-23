@@ -7,18 +7,21 @@ const fetchProductDetails = async (slug: string) => {
   return res.data.product;
 };
 
-export async function generateMetaData({
+// ✅ correct name + async params
+export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const productDetails = await fetchProductDetails(params.slug);
+  const { slug } = await params;
+  const productDetails = await fetchProductDetails(slug);
+
   return {
     title: productDetails.title || 'EasyShop marketPlace',
     description:
       productDetails.short_description || 'discover high products on EasyShop',
     openGraph: {
-      images: [productDetails.images[0].url],
+      images: [productDetails.images?.[0]?.url],
       title: productDetails.title || 'EasyShop marketPlace',
       description:
         productDetails.short_description ||
@@ -27,8 +30,15 @@ export async function generateMetaData({
   };
 }
 
-const page = async ({ params }: { params: { slug: string } }) => {
-  const productDetails = await fetchProductDetails(params.slug);
+// ✅ same fix here
+const page = async ({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) => {
+  const { slug } = await params;
+  const productDetails = await fetchProductDetails(slug);
+
   return <ProductDetails productDetails={productDetails} />;
 };
 

@@ -1,7 +1,7 @@
 'use client';
-import { ChevronLeft, ChevronRight, Heart, ShoppingBag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, MapPin, MessagesSquare, Package, ShoppingBag, Store, WalletMinimal } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ReactImageMagnify from 'react-image-magnify';
 import Ratings from './Ratings';
 import { useStore } from '../../store';
@@ -9,13 +9,16 @@ import useLocationTracking from '../../hooks/useLocationTracking';
 import useDeviceTracking from '../../hooks/useDeviceTracking';
 import useUser from '../../hooks/use-user';
 import { useRouter } from 'next/navigation';
-import { formatProductForStore } from '../../utils/formatProductForStore';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 import {
   CartProduct,
   CleanLocationInfo,
   ProductDetailsInfo,
 } from '../../types/Product';
+import ProductCard from '../cards/ProductCard';
+import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 
 const ProductDetails = ({ productDetails }: { productDetails: any }) => {
   const {
@@ -48,16 +51,17 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
     productDetails.images[0]?.url || productDetails.image
   );
   const [selectedColor, setSelectedColor] = useState<string>(
-    productDetails.colors?.[0] || []
+    productDetails.colors?.[0] || ''
   );
   const [selectedSize, setSelectedSize] = useState<string>(
-    productDetails.sizes?.[0] || []
+    productDetails.sizes?.[0] || ''
   );
   const [quantity, setQuantity] = useState(1);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [priceRange, setPriceRange] = useState(
     productDetails.sale_price || 1199
   );
+  
   // Check if product is in cart and get its quantity
   const cartItem = cart.find((item) => item.id === productDetails.id);
   const currentCartQuantity = cartItem?.quantity || 0;
@@ -77,26 +81,22 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
     category: product.category,
     shopId: product.shopId,
     stock: product.stock,
-
     regular_price: product.regular_price,
     sale_price: product.sale_price,
-
     selectedSize,
     selectedColor,
-
     image:  product.images?.[0]?.url || '',
-
     brand: product.brand,
     warranty: product.warranty,
     cashOnDelivery: product.cashOnDelivery,
-
     quantity: 1,
   });
-      const cartItems = mapProductToCartProduct(
-      productDetails,
-      selectedSize,
-      selectedColor
-    );
+  
+  const cartItems = mapProductToCartProduct(
+    productDetails,
+    selectedSize,
+    selectedColor
+  );
 
   const prevImage = () => {
     if (currentIndex > 0) {
@@ -127,7 +127,6 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
       return;
     }
     
-
     if (isWishlisted) {
       removeFromWishlist(productDetails.id, user, safeLocation, deviceData);
     } else {
@@ -155,10 +154,8 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
     // Check if we can add more based on stock
     if (currentCartQuantity >= productDetails.stock) {
       toast.success(`Only ${productDetails.stock} items available in stock`);
-
       return;
     }
-
 
     // Use addToCart to increment quantity
     addToCart(cartItems, user, safeLocation, deviceData);
@@ -182,8 +179,6 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
     }
   };
 
-
-
   const handleBuyNow = () => {
     if (!user) {
       router.push(
@@ -196,12 +191,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
 
     // Add to cart first
     addToCart(
-      {
-        ...productDetails,
-        quantity,
-        colors: selectedColor,
-        sizes: selectedSize,
-      },
+      cartItems,
       user,
       safeLocation,
       deviceData
@@ -210,13 +200,35 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
     router.push('/checkout');
   };
 
+
+const fetchRecommendedProducts = async () => {
+  try {
+    const query = new URLSearchParams();
+    query.set('priceRange', priceRange.join(','));
+    query.set('limit', '4');
+    query.set('page', '1');
+
+    const res = await axiosInstance.get(
+      `/product/api/get-filtered-products?${query.toString()}`
+    );
+
+    setRecommendedProducts(res.data.products);
+  } catch (error) {
+    console.error('Error fetching recommended products:', error);
+  }
+};
+useEffect(() => {
+  fetchRecommendedProducts();
+},[priceRange])
+
   return (
     <div className="w-full bg-gray-50 py-8 min-h-screen">
       <div className="w-[90%] max-w-7xl mx-auto">
-        {/* Main Grid Container */}
+        {/* Main Grid Container - Now with 3 columns */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-8 p-6">
-          {/* Left Column - Images (40% width) */}
-          <div className="lg:col-span-5">
+          
+          {/* Left Column - Images (4 columns) */}
+          <div className="lg:col-span-4">
             {/* Main Image with Magnify */}
             <div className="relative border border-gray-200 rounded-lg bg-white p-4 mb-6">
               <div className="relative w-full h-[400px] z-10">
@@ -332,8 +344,8 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
             </div>
           </div>
 
-          {/* Middle Column - Product Info (44% width) */}
-          <div className="lg:col-span-7 space-y-6">
+          {/* Middle Column - Product Info (5 columns) */}
+          <div className="lg:col-span-5 space-y-6">
             {/* Product Title */}
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
@@ -366,7 +378,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
                       EGP{productDetails.regular_price.toFixed(1)}
                     </span>
                     <span className="bg-red-50 text-red-600 px-2 py-1 rounded text-sm font-medium">
-                      Save $
+                      Save EGP
                       {(
                         productDetails.regular_price - productDetails.sale_price
                       ).toFixed(2)}
@@ -386,6 +398,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
                 {productDetails.description || 'No description available.'}
               </p>
             </div>
+
             {/* Brand */}
             <div>
               <h3 className="text-lg font-semibold mb-3 text-gray-900">
@@ -395,6 +408,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
                 {productDetails.brand || 'No brand available.'}
               </p>
             </div>
+
             {/* Color Selection */}
             <div className="space-y-3">
               <h3 className="text-black font-medium text-[20px]">Select Colors</h3>
@@ -403,14 +417,14 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
                   <button
                     key={index}
                     className={`
-                                relative w-[60px] h-[60px] rounded-full flex items-center justify-center 
-                                cursor-pointer transition-all duration-200 hover:scale-105
-                                ${
-                                  selectedColor === color
-                                    ? 'bg-blue-100 ring-2 ring-blue-500 ring-offset-2'
-                                    : 'bg-[#F4F7F9] hover:bg-gray-100'
-                                }
-                              `}
+                      relative w-[60px] h-[60px] rounded-full flex items-center justify-center 
+                      cursor-pointer transition-all duration-200 hover:scale-105
+                      ${
+                        selectedColor === color
+                          ? 'bg-blue-100 ring-2 ring-blue-500 ring-offset-2'
+                          : 'bg-[#F4F7F9] hover:bg-gray-100'
+                      }
+                    `}
                     onClick={() =>
                       setSelectedColor((prev) => (prev === color ? '' : color))
                     }
@@ -421,9 +435,9 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
                     {/* Color circle */}
                     <div
                       className={`
-                                  w-[32px] h-[32px] rounded-full transition-all duration-200
-                                  ${selectedColor === color ? 'scale-110' : ''}
-                                `}
+                        w-[32px] h-[32px] rounded-full transition-all duration-200
+                        ${selectedColor === color ? 'scale-110' : ''}
+                      `}
                       style={{ backgroundColor: color }}
                     />
                   </button>
@@ -439,7 +453,6 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
 
               <div className="flex flex-wrap gap-2.5">
                 {productDetails.sizes?.map((size: string, index: number) => {
-                  // Optional: Check if size is in stock
                   const inStock = true; // Replace with your stock check logic
 
                   return (
@@ -447,18 +460,18 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
                       key={index}
                       disabled={!inStock}
                       className={`
-            relative min-w-[70px] px-5 py-3.5 rounded-full text-center
-            font-medium transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-            ${
-              selectedSize === size
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg scale-105'
-                : inStock
-                ? 'bg-gray-100 text-gray-800 hover:bg-gray-200 hover:shadow-sm'
-                : 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'
-            }
-            ${!inStock && 'line-through'}
-          `}
+                        relative min-w-[70px] px-5 py-3.5 rounded-full text-center
+                        font-medium transition-all duration-200
+                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                        ${
+                          selectedSize === size
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg scale-105'
+                            : inStock
+                            ? 'bg-gray-100 text-gray-800 hover:bg-gray-200 hover:shadow-sm'
+                            : 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'
+                        }
+                        ${!inStock && 'line-through'}
+                      `}
                       onClick={() =>
                         setSelectedSize((prev) => (prev === size ? '' : size))
                       }
@@ -482,7 +495,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
               </div>
             </div>
 
-            {/* Quantity Selector - Updated to match cart page */}
+            {/* Quantity Selector */}
             <div className="space-y-2 pt-4 border-t">
               <div className="flex items-center justify-between">
                 <p className="font-medium text-gray-900">Quantity</p>
@@ -577,78 +590,152 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
                 />
               </button>
             </div>
+          </div>
 
-            {/* Specifications/Features */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3 text-gray-900">
-                Key Features
-              </h3>
-              <ul className="space-y-2">
-                {(
-                  productDetails.features || [
-                    'High-quality materials',
-                    'Durable construction',
-                    'Easy to use',
-                    'Value for money',
-                  ]
-                )
-                  .slice(0, 5)
-                  .map((feature: string, index: number) => (
-                    <li
-                      key={index}
-                      className="flex items-center gap-2 text-gray-700"
-                    >
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      {feature}
-                    </li>
-                  ))}
-              </ul>
+          {/* Right Column - Seller & Delivery Info (3 columns) */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Delivery Options Card */}
+            <div className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Delivery Options</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <MapPin size={20} className="text-blue-600" />
+                  <div>
+                    <p className="text-sm font-medium">Delivery to</p>
+                    <p className="text-gray-600">
+                      {safeLocation?.city || 'City'}, {safeLocation?.country || 'Country'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">Standard Delivery</span>
+                    <span className="text-green-600 font-bold">FREE</span>
+                  </div>
+                  <p className="text-sm text-gray-600">Delivery within 3-7 business days</p>
+                </div>
+                
+                <div className="pt-4 border-t">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">Express Delivery</span>
+                    <span className="font-bold">EGP 50.00</span>
+                  </div>
+                  <p className="text-sm text-gray-600">Delivery within 1-2 business days</p>
+                </div>
+              </div>
             </div>
 
-            {/* Additional Info */}
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="p-2 bg-blue-100 rounded">
-                  <svg
-                    className="w-5 h-5 text-blue-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+            {/* Return & Warranty Card */}
+            <div className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Return & Warranty</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Package size={20} className="text-blue-600" />
+                  <div>
+                    <p className="font-medium">7 Days Returns</p>
+                    <p className="text-sm text-gray-600">Easy return policy</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <WalletMinimal size={20} className="text-gray-600" />
+                  <div>
+                    <p className="font-medium">Warranty</p>
+                    <p className="text-sm text-gray-600">Not available for this product</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Seller Info Card */}
+            <div className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 font-bold">
+                    {productDetails.shop?.name?.charAt(0) || 'S'}
+                  </span>
                 </div>
                 <div>
-                  <p className="font-medium text-sm">Free Shipping</p>
-                  <p className="text-xs text-gray-500">On orders over $50</p>
+                  <p className="text-sm text-gray-600">Sold by</p>
+                  <p className="font-medium truncate max-w-[150px]">
+                    {productDetails.shop?.name || 'Seller Name'}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="p-2 bg-green-100 rounded">
-                  <svg
-                    className="w-5 h-5 text-green-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+              {/* Seller Performance */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Seller Rating</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {productDetails.shop?.rating || '4.5'}
+                  </p>
+                  <div className="flex justify-center mt-1">
+                    <Ratings rating={productDetails.shop?.rating || 4.5}  />
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-sm">Easy Returns</p>
-                  <p className="text-xs text-gray-500">30-day return policy</p>
+                
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Ship on Time</p>
+                  <p className="text-2xl font-bold text-green-600">100%</p>
+                  <p className="text-xs text-gray-500 mt-1">Reliable</p>
                 </div>
               </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <Link
+                  href={`/shop/${productDetails.shop?.slug}`}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  <MessagesSquare size={18} />
+                  Chat with Seller
+                </Link>
+                
+                <Link
+                  href={`/shop/${productDetails.shop?.slug}`}
+                  className="w-full flex items-center justify-center gap-2 border border-blue-600 text-blue-600 py-2.5 px-4 rounded-lg font-medium hover:bg-blue-50 transition-colors"
+                >
+                  <Store size={18} />
+                  Visit Store
+                </Link>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+        <div className='bg-[#fafafa] -mt-6'>
+          <div className='bg-white min-[60vh] h-full p-5'>
+            <h3 className='text-lg font-semibold'> product details of {productDetails.title} </h3>
+            <div className='prose prose-sm text-slate-200 max-w-none'
+            dangerouslySetInnerHTML={{ __html: productDetails.description }}
+            >
+
+            </div>
+
+          </div>
+          <div>
+            <div>
+              <h3>Reviews & ratings of {productDetails?.title}</h3>
+              <p>No reviews available yet</p>
+            </div>
+          </div>
+          <div className='w-[90%] lg:w-lg-[80%] mx-auto'>
+            <div className='w-full h-full my-5 p-5'>
+              <h3>You may also like</h3>
+              <div className='m-auto grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
+                {recommendedProducts.map((product: ProductDetailsInfo) => (
+                  <ProductCard key={product.id} product={product} showShop={true} />
+                ))}
+              </div>
+
             </div>
           </div>
         </div>
+
+
       </div>
     </div>
   );

@@ -136,7 +136,7 @@ export const uploadProductImage = async (
 
     if (!fileName) {
       res.status(400).json({ message: 'No image received' });
-      return; 
+      return;
     }
 
     const response = await imagekit.upload({
@@ -639,26 +639,268 @@ export const getAllProducts = async (
   }
 };
 
-
 // routes/product.ts (Backend)
-export const getProductDetails = async (req: Request, res: Response, next: NextFunction) => {
+export const getProductDetails = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { slug } = req.params; // Changed from productId to slug
-  
+
   const product = await prisma.product.findUnique({
     where: { slug },
-    include: { 
-      images: true, 
+    include: {
+      images: true,
     },
   });
-  
+
   if (!product) {
-    return res.status(404).json({ 
-      message: 'Product not found' 
+    return res.status(404).json({
+      message: 'Product not found',
     });
   }
-  
-  return res.status(200).json({ 
-    message: 'Product fetched successfully', 
-    product 
+
+  return res.status(200).json({
+    message: 'Product fetched successfully',
+    product,
   });
-}
+};
+
+// controllers/product.controller.ts
+
+export const getFilteredProducts = async (req: Request, res: Response) => {
+  try {
+    const {
+      priceRange = [0, 10000],
+      page = 1,
+      limit = 12,
+      categories = [],
+      colors = [],
+      sizes = [],
+    } = req.query;
+    const parsedPriceRange =
+      typeof priceRange === 'string'
+        ? priceRange.split(',').map(Number)
+        : [0, 10000];
+
+    const parsedPage = typeof page === 'string' ? parseInt(page) : 1;
+    const parsedLimit = typeof limit === 'string' ? parseInt(limit) : 12;
+    const skip = (parsedPage - 1) * parsedLimit;
+
+    const filters: any = {
+      salesPrice: {
+        ...(parsedPriceRange[0] && { $gte: parsedPriceRange[0] }),
+        ...(parsedPriceRange[1] && { $lte: parsedPriceRange[1] }),
+      },
+      starting_date: null,
+    };
+
+    if (categories && (categories as string[]).length > 0)
+      filters.category = {
+        in: Array.isArray(categories)
+          ? categories
+          : String(categories).split(','),
+      };
+    if (sizes && (sizes as string[]).length > 0)
+      filters.sizes = {
+        hasSome: Array.isArray(sizes) ? sizes : [sizes],
+      };
+    if (colors && (colors as string[]).length > 0)
+      filters.colors = {
+        hasSome: Array.isArray(colors) ? colors : [colors],
+      };
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where: {
+          ...filters,
+          isDeleted: false,
+        },
+        skip,
+        take: parsedLimit,
+        include: {
+          images: true,
+          shop: true,
+        },
+      }),
+      prisma.product.count({
+        where: {
+          ...filters,
+          isDeleted: false,
+        },
+      }),
+    ]);
+    const totalPages = Math.ceil(total / parsedLimit);
+
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        total,
+        limit: parsedLimit,
+        page: parsedPage,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    console.error('getFilteredProducts error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch filtered products',
+    });
+  }
+};
+export const getFilteredEvents = async (req: Request, res: Response) => {
+  try {
+    const {
+      priceRange = [0, 10000],
+      page = 1,
+      limit = 12,
+      categories = [],
+      colors = [],
+      sizes = [],
+    } = req.query;
+    const parsedPriceRange =
+      typeof priceRange === 'string'
+        ? priceRange.split(',').map(Number)
+        : [0, 10000];
+
+    const parsedPage = typeof page === 'string' ? parseInt(page) : 1;
+    const parsedLimit = typeof limit === 'string' ? parseInt(limit) : 12;
+    const skip = (parsedPage - 1) * parsedLimit;
+
+    const filters: any = {
+      salesPrice: {
+        ...(parsedPriceRange[0] && { $gte: parsedPriceRange[0] }),
+        ...(parsedPriceRange[1] && { $lte: parsedPriceRange[1] }),
+      },
+      Not:{
+
+        starting_date: null,
+      }
+    };
+
+    if (categories && (categories as string[]).length > 0)
+      filters.category = {
+        in: Array.isArray(categories)
+          ? categories
+          : String(categories).split(','),
+      };
+    if (sizes && (sizes as string[]).length > 0)
+      filters.sizes = {
+        hasSome: Array.isArray(sizes) ? sizes : [sizes],
+      };
+    if (colors && (colors as string[]).length > 0)
+      filters.colors = {
+        hasSome: Array.isArray(colors) ? colors : [colors],
+      };
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where: {
+          ...filters,
+          isDeleted: false,
+        },
+        skip,
+        take: parsedLimit,
+        include: {
+          images: true,
+          shop: true,
+        },
+      }),
+      prisma.product.count({
+        where: {
+          ...filters,
+          isDeleted: false,
+        },
+      }),
+    ]);
+    const totalPages = Math.ceil(total / parsedLimit);
+
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        total,
+        limit: parsedLimit,
+        page: parsedPage,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    console.error('getFiltered events error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch filtered events',
+    });
+  }
+};
+export const getFilteredShops = async (req: Request, res: Response) => {
+  try {
+    const {
+      countries = [],
+      page = 1,
+      limit = 12,
+      categories = [],
+
+    } = req.query;
+
+    const parsedPage = typeof page === 'string' ? parseInt(page) : 1;
+    const parsedLimit = typeof limit === 'string' ? parseInt(limit) : 12;
+    const skip = (parsedPage - 1) * parsedLimit;
+
+    const filters: any = {};
+
+    if (categories && (categories as string[]).length > 0)
+      filters.category = {
+        in: Array.isArray(categories)
+          ? categories
+          : String(categories).split(','),
+      };
+    if (countries && (countries as string[]).length > 0)
+      filters.country = {
+ in: Array.isArray(countries)
+          ? countries
+          : String(countries).split(','),      };
+
+
+    
+
+    const [shops, total] = await Promise.all([
+      prisma.shops.findMany({
+        where: {
+          ...filters,
+          isDeleted: false,
+        },
+        skip,
+        take: parsedLimit,
+        include: {
+          // follower: true,
+          seller: true,
+          products: true,
+        },
+      }),
+      prisma.shops.count({
+        where: filters,
+        
+      }),
+    ]);
+    const totalPages = Math.ceil(total / parsedLimit);
+
+    res.status(200).json({
+      success: true,
+      shops,
+      pagination: {
+        total,
+        page: parsedPage,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    console.error('getFiltered shops error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch shops events',
+    });
+  }
+};
