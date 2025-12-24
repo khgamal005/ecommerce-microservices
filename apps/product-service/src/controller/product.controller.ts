@@ -8,6 +8,7 @@ import { NextFunction, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 
 import { imagekit } from '@packages/libs/imagekit';
+import { Sun } from 'lucide-react';
 
 export const getCategories = async (
   req: any,
@@ -572,7 +573,6 @@ export const restoreProduct = async (
 export const getAllProducts = async (
   req: Request,
   res: Response,
-  next: NextFunction
 ) => {
   try {
     // 1️⃣ Pagination
@@ -582,25 +582,23 @@ export const getAllProducts = async (
 
     // 2️⃣ Sorting type
     const type = req.query.type as string;
-    const orderBy: Prisma.ProductOrderByWithRelationInput =
-      type === 'latest' ? { createdAt: 'desc' } : { rating: 'desc' };
 
-    // 3️⃣ Base filter (products not in active sale period)
+    let orderBy: Prisma.ProductOrderByWithRelationInput;
+    if (type === 'rating') {
+      orderBy = { rating: 'desc' };
+    } else {
+      // default: latest
+      orderBy = { createdAt: 'desc' };
+    }
+
+    // 3️⃣ Base filter
     const baseFilter: Prisma.ProductWhereInput = {
-      OR: [
-        {
-          starting_date: null,
-        },
-        {
-          ending_date: null,
-        },
-      ],
-      isDeleted: false, // always include this
+      OR: [{ starting_date: null }, { ending_date: null }],
+      isDeleted: false,
     };
 
     // 4️⃣ Run queries in parallel
     const [products, total, top10Products] = await Promise.all([
-      // Paginated products
       prisma.product.findMany({
         where: baseFilter,
         skip,
@@ -609,10 +607,8 @@ export const getAllProducts = async (
         include: { images: true, shop: true },
       }),
 
-      // Total product count (for pagination)
       prisma.product.count({ where: baseFilter }),
 
-      // Top 10 products (based on type)
       prisma.product.findMany({
         where: baseFilter,
         orderBy,
@@ -621,11 +617,11 @@ export const getAllProducts = async (
       }),
     ]);
 
-    // 5️⃣ Send response
+    // 5️⃣ Response
     res.status(200).json({
       message: 'Products fetched successfully',
       products,
-      top10By: type === 'latest' ? 'latest' : 'rating',
+      top10By: type === 'rating' ? 'rating' : 'latest',
       top10Products,
       total,
       currentPage: page,
@@ -633,11 +629,13 @@ export const getAllProducts = async (
     });
   } catch (error: any) {
     console.error('❌ Unexpected getAllProducts error:', error);
-    res
-      .status(500)
-      .json({ message: 'Internal server error', error: error.message });
+    res.status(500).json({
+      message: 'Internal server error',
+      error: error.message,
+    });
   }
 };
+
 
 // routes/product.ts (Backend)
 export const getProductDetails = async (
@@ -678,6 +676,7 @@ export const getFilteredProducts = async (req: Request, res: Response) => {
       colors = [],
       sizes = [],
     } = req.query;
+
     const parsedPriceRange =
       typeof priceRange === 'string'
         ? priceRange.split(',').map(Number)
@@ -688,11 +687,11 @@ export const getFilteredProducts = async (req: Request, res: Response) => {
     const skip = (parsedPage - 1) * parsedLimit;
 
     const filters: any = {
-      salesPrice: {
-        ...(parsedPriceRange[0] && { $gte: parsedPriceRange[0] }),
-        ...(parsedPriceRange[1] && { $lte: parsedPriceRange[1] }),
+      sale_price: {
+        gte: parsedPriceRange[0],
+        lte: parsedPriceRange[1],
       },
-      starting_date: null,
+      isDeleted: false,
     };
 
     if (categories && (categories as string[]).length > 0)
@@ -701,10 +700,12 @@ export const getFilteredProducts = async (req: Request, res: Response) => {
           ? categories
           : String(categories).split(','),
       };
+
     if (sizes && (sizes as string[]).length > 0)
       filters.sizes = {
         hasSome: Array.isArray(sizes) ? sizes : [sizes],
       };
+
     if (colors && (colors as string[]).length > 0)
       filters.colors = {
         hasSome: Array.isArray(colors) ? colors : [colors],
@@ -712,10 +713,7 @@ export const getFilteredProducts = async (req: Request, res: Response) => {
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
-        where: {
-          ...filters,
-          isDeleted: false,
-        },
+        where: filters,
         skip,
         take: parsedLimit,
         include: {
@@ -724,15 +722,13 @@ export const getFilteredProducts = async (req: Request, res: Response) => {
         },
       }),
       prisma.product.count({
-        where: {
-          ...filters,
-          isDeleted: false,
-        },
+        where: filters,
       }),
     ]);
+
     const totalPages = Math.ceil(total / parsedLimit);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       products,
       pagination: {
@@ -744,12 +740,13 @@ export const getFilteredProducts = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('getFilteredProducts error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to fetch filtered products',
     });
   }
 };
+
 export const getFilteredEvents = async (req: Request, res: Response) => {
   try {
     const {
@@ -770,14 +767,13 @@ export const getFilteredEvents = async (req: Request, res: Response) => {
     const skip = (parsedPage - 1) * parsedLimit;
 
     const filters: any = {
-      salesPrice: {
-        ...(parsedPriceRange[0] && { $gte: parsedPriceRange[0] }),
-        ...(parsedPriceRange[1] && { $lte: parsedPriceRange[1] }),
+      sale_price: {
+        ...(parsedPriceRange[0] && { gte: parsedPriceRange[0] }),
+        ...(parsedPriceRange[1] && { lte: parsedPriceRange[1] }),
       },
-      Not:{
-
+      Not: {
         starting_date: null,
-      }
+      },
     };
 
     if (categories && (categories as string[]).length > 0)
@@ -837,13 +833,7 @@ export const getFilteredEvents = async (req: Request, res: Response) => {
 };
 export const getFilteredShops = async (req: Request, res: Response) => {
   try {
-    const {
-      countries = [],
-      page = 1,
-      limit = 12,
-      categories = [],
-
-    } = req.query;
+    const { countries = [], page = 1, limit = 12, categories = [] } = req.query;
 
     const parsedPage = typeof page === 'string' ? parseInt(page) : 1;
     const parsedLimit = typeof limit === 'string' ? parseInt(limit) : 12;
@@ -859,12 +849,8 @@ export const getFilteredShops = async (req: Request, res: Response) => {
       };
     if (countries && (countries as string[]).length > 0)
       filters.country = {
- in: Array.isArray(countries)
-          ? countries
-          : String(countries).split(','),      };
-
-
-    
+        in: Array.isArray(countries) ? countries : String(countries).split(','),
+      };
 
     const [shops, total] = await Promise.all([
       prisma.shops.findMany({
@@ -875,14 +861,13 @@ export const getFilteredShops = async (req: Request, res: Response) => {
         skip,
         take: parsedLimit,
         include: {
-          // follower: true,
+          followers: true,
           seller: true,
           products: true,
         },
       }),
       prisma.shops.count({
         where: filters,
-        
       }),
     ]);
     const totalPages = Math.ceil(total / parsedLimit);
@@ -901,6 +886,129 @@ export const getFilteredShops = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch shops events',
+    });
+  }
+};
+
+export const searchProducts = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const query = req.query.q as string;
+
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a search query',
+      });
+    }
+
+    const products = await prisma.product.findMany({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            short_description: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+      },
+      take: 10,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      products,
+    });
+  } catch (error) {
+    console.error('searchProducts error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to search products',
+    });
+  }
+};
+
+export const topShops = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const topShopsData = await prisma.orders.groupBy({
+      by: ['shopId'],
+      _sum: {
+        total: true,
+      },
+      orderBy: {
+        _sum: {
+          total: 'desc', // ✅ must order by aggregated field
+        },
+      },
+      take: 10,
+    });
+
+    const shopIds = topShopsData.map((shop) => shop.shopId);
+
+    const topShops = await prisma.shops.findMany({
+      where: {
+        id: {
+          in: shopIds,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        coverBanner: true,
+        address: true,
+        ratings: true,
+        category: true,
+        // followers: true, // ⚠️ keep ONLY if exists in Prisma model
+      },
+    });
+
+    const enrichedShops = topShops.map((shop) => {
+      const shopData = topShopsData.find(
+        (data) => data.shopId === shop.id
+      );
+
+      return {
+        ...shop,
+        totalOrders: shopData?._sum.total ?? 0,
+      };
+    });
+
+    const top10Shops = enrichedShops
+      .sort((a, b) => b.totalOrders - a.totalOrders)
+      .slice(0, 10);
+
+    return res.status(200).json({
+      success: true,
+      top10Shops,
+    });
+  } catch (error) {
+    console.error('topShops error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch top shops',
     });
   }
 };

@@ -10,7 +10,7 @@ export enum Languages {
 
 export enum Routes {
   Home = "home",
-  Products = "Products",
+  Products = "products",
   Shops = "shops",
   Offers = "offers",
   BecomeSeller = "become-Seller",

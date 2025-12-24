@@ -58,9 +58,11 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
   );
   const [quantity, setQuantity] = useState(1);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
-  const [priceRange, setPriceRange] = useState(
-    productDetails.sale_price || 1199
-  );
+const [priceRange, setPriceRange] = useState<[number, number]>([
+  0,
+  productDetails.sale_price || 1199,
+]);
+
   
   // Check if product is in cart and get its quantity
   const cartItem = cart.find((item) => item.id === productDetails.id);
@@ -201,6 +203,8 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
   };
 
 
+
+
 const fetchRecommendedProducts = async () => {
   try {
     const query = new URLSearchParams();
@@ -217,6 +221,11 @@ const fetchRecommendedProducts = async () => {
     console.error('Error fetching recommended products:', error);
   }
 };
+
+useEffect(() => {
+  fetchRecommendedProducts();
+}, [priceRange]);
+
 useEffect(() => {
   fetchRecommendedProducts();
 },[priceRange])

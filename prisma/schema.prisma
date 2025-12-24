@@ -19,9 +19,10 @@ model users {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   shopReviews shopReviews[]
-
+  orders    Orders[]
   images Images[] // general images for user
 }
+
 
 //
 // -------------------- IMAGE ---------------------
@@ -63,15 +64,18 @@ model sellers {
 // -------------------- SHOP ---------------------
 //
 model Shops {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  bio           String?
-  category      String
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  bio      String?
+  category String?
+  country  String?
+    followers ShopFollowers[]
   coverBanner   String?
   address       String?
   opining_hours String?
   webSite       String?
   socialLinks   Json[]
+  avatar       String?
   ratings       Float         @default(0)
   reviews       shopReviews[]
   sellerId      String        @unique @db.ObjectId
@@ -80,7 +84,9 @@ model Shops {
   updatedAt     DateTime      @updatedAt
 
   products Product[]
-  images   Images[] // back-relation for shop images
+  images   Images[]
+    orders        Orders[]
+ // back-relation for shop images
 }
 
 model shopReviews {
@@ -164,6 +170,8 @@ model Product {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   deletedAt             DateTime?
+  orderItems OrderItem[]
+
 }
 
 model UserAnalytics {
@@ -201,4 +209,57 @@ model ProductAnalytics {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ShopFollowers {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  shopId  String @db.ObjectId
+  userId  String @db.ObjectId
+  shop    Shops  @relation(fields: [shopId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Orders {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId      String   @db.ObjectId
+  shopId      String   @db.ObjectId
+
+  total       Float
+  status      OrderStatus @default(PENDING)
+  paymentType PaymentType
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // relations
+  user        users    @relation(fields: [userId], references: [id])
+  shop        Shops    @relation(fields: [shopId], references: [id])
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  orderId  String  @db.ObjectId
+  productId String @db.ObjectId
+
+  quantity Int
+  price    Float
+
+  order    Orders  @relation(fields: [orderId], references: [id])
+  product  Product @relation(fields: [productId], references: [id])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+enum PaymentType {
+  STRIPE
+  PAYPAL
+  COD
 }
