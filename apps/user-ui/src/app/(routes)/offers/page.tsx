@@ -61,7 +61,7 @@ const page = () => {
       searchParams.set('sizes', selectedSize.join(','));
     searchParams.set('limit', '12');
     searchParams.set('page', page.toString());
-    router.replace(`/products?${decodeURIComponent(searchParams.toString())}`);
+    router.replace(`/offers?${decodeURIComponent(searchParams.toString())}`);
   };
 
   const fetchFilteredProducts = async () => {
@@ -78,7 +78,7 @@ const page = () => {
       query.set('page', page.toString());
 
       const res = await axiosInstance.get(
-        `/product/api/get-filtered-products?${query.toString()}`
+        `/product/api/get-filtered-offers?${query.toString()}`
       );
 
       setProducts(res.data.products);

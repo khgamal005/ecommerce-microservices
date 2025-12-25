@@ -686,13 +686,14 @@ export const getFilteredProducts = async (req: Request, res: Response) => {
     const parsedLimit = typeof limit === 'string' ? parseInt(limit) : 12;
     const skip = (parsedPage - 1) * parsedLimit;
 
-    const filters: any = {
-      sale_price: {
-        gte: parsedPriceRange[0],
-        lte: parsedPriceRange[1],
-      },
-      isDeleted: false,
-    };
+const filters: any = {
+  sale_price: {
+    gte: parsedPriceRange[0],
+    lte: parsedPriceRange[1],
+  },
+  starting_date: null, // ✅ EXCLUDE events
+  isDeleted: false,
+};
 
     if (categories && (categories as string[]).length > 0)
       filters.category = {
@@ -750,53 +751,54 @@ export const getFilteredProducts = async (req: Request, res: Response) => {
 export const getFilteredEvents = async (req: Request, res: Response) => {
   try {
     const {
-      priceRange = [0, 10000],
-      page = 1,
-      limit = 12,
-      categories = [],
-      colors = [],
-      sizes = [],
+      priceRange = '0,10000',
+      page = '1',
+      limit = '12',
+      categories,
+      colors,
+      sizes,
     } = req.query;
-    const parsedPriceRange =
-      typeof priceRange === 'string'
-        ? priceRange.split(',').map(Number)
-        : [0, 10000];
 
-    const parsedPage = typeof page === 'string' ? parseInt(page) : 1;
-    const parsedLimit = typeof limit === 'string' ? parseInt(limit) : 12;
+    const [minPrice, maxPrice] = String(priceRange)
+      .split(',')
+      .map(Number);
+
+    const parsedPage = parseInt(page as string);
+    const parsedLimit = parseInt(limit as string);
     const skip = (parsedPage - 1) * parsedLimit;
 
     const filters: any = {
       sale_price: {
-        ...(parsedPriceRange[0] && { gte: parsedPriceRange[0] }),
-        ...(parsedPriceRange[1] && { lte: parsedPriceRange[1] }),
+        gte: minPrice,
+        lte: maxPrice,
       },
-      Not: {
-        starting_date: null,
+      starting_date: {
+        not: null,
       },
+      isDeleted: false,
     };
 
-    if (categories && (categories as string[]).length > 0)
+    if (categories) {
       filters.category = {
-        in: Array.isArray(categories)
-          ? categories
-          : String(categories).split(','),
+        in: String(categories).split(','),
       };
-    if (sizes && (sizes as string[]).length > 0)
-      filters.sizes = {
-        hasSome: Array.isArray(sizes) ? sizes : [sizes],
-      };
-    if (colors && (colors as string[]).length > 0)
+    }
+
+    if (colors) {
       filters.colors = {
-        hasSome: Array.isArray(colors) ? colors : [colors],
+        hasSome: String(colors).split(','),
       };
+    }
+
+    if (sizes) {
+      filters.sizes = {
+        hasSome: String(sizes).split(','),
+      };
+    }
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
-        where: {
-          ...filters,
-          isDeleted: false,
-        },
+        where: filters,
         skip,
         take: parsedLimit,
         include: {
@@ -805,22 +807,18 @@ export const getFilteredEvents = async (req: Request, res: Response) => {
         },
       }),
       prisma.product.count({
-        where: {
-          ...filters,
-          isDeleted: false,
-        },
+        where: filters,
       }),
     ]);
-    const totalPages = Math.ceil(total / parsedLimit);
 
     res.status(200).json({
       success: true,
       products,
       pagination: {
         total,
-        limit: parsedLimit,
         page: parsedPage,
-        totalPages,
+        limit: parsedLimit,
+        totalPages: Math.ceil(total / parsedLimit),
       },
     });
   } catch (error) {
@@ -831,6 +829,7 @@ export const getFilteredEvents = async (req: Request, res: Response) => {
     });
   }
 };
+
 export const getFilteredShops = async (req: Request, res: Response) => {
   try {
     const { countries = [], page = 1, limit = 12, categories = [] } = req.query;
