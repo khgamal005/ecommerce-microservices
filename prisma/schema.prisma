@@ -86,7 +86,6 @@ model Shops {
   products Product[]
   images   Images[]
     orders        Orders[]
- // back-relation for shop images
 }
 
 model shopReviews {
