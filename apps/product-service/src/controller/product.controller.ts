@@ -956,7 +956,7 @@ export const topShops = async (
       },
       orderBy: {
         _sum: {
-          total: 'desc', // ✅ must order by aggregated field
+          total: 'desc', 
         },
       },
       take: 10,
@@ -1097,3 +1097,80 @@ export const getFilteredShops = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+
+export const getAllEvents = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    // 1️⃣ Pagination
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const now = new Date();
+
+    // 2️⃣ Query events
+    const [events, total] = await Promise.all([
+      prisma.product.findMany({
+        where: {
+          isDeleted: false,
+          status: 'active',
+          starting_date: { not: null },
+          ending_date: { not: null },
+          // Optional: only active/ongoing events
+          // ending_date: { gte: now },
+        },
+        orderBy: {
+          starting_date: 'asc',
+        },
+        skip,
+        take: limit,
+        include: {
+          images: true,
+          shop: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+      }),
+
+      prisma.product.count({
+        where: {
+          isDeleted: false,
+          status: 'active',
+          starting_date: { not: null },
+          // ending_date: { not: null },
+        },
+      }),
+    ]);
+
+    // 3️⃣ Pagination info
+    const totalPages = Math.ceil(total / limit);
+
+    return res.status(200).json({
+      success: true,
+      events,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error('getAllEvents error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch events',
+    });
+  }
+};
+
