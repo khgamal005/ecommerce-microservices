@@ -69,7 +69,7 @@ model Shops {
   bio      String?
   category String?
   country  String?
-    followers ShopFollowers[]
+  followers ShopFollowers[]
   coverBanner   String?
   address       String?
   opining_hours String?

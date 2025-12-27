@@ -1,5 +1,5 @@
 import express from 'express';
-import { createDiscountCode, createProduct, deleteDiscountCode, deleteProduct, deleteProductImage, getAllProducts, getCategories, getDiscountCodes, getFilteredEvents, getFilteredProducts, getFilteredShops, getProductDetails, getShopProducts, restoreProduct, searchProducts, topShops, uploadProductImage } from '../controller/product.controller';
+import { createDiscountCode, createProduct, deleteDiscountCode, deleteProduct, deleteProductImage, getAllEvents, getAllProducts, getCategories, getDiscountCodes, getFilteredEvents, getFilteredProducts, getFilteredShops, getProductDetails, getShopProducts, restoreProduct, searchProducts, topShops, uploadProductImage } from '../controller/product.controller';
 import { isSeller } from '@packages/middelware/authorizeRole';
 import { isAuthenticated } from '@packages/middelware/isAuthenticated';
 
@@ -35,6 +35,8 @@ router.get('/get-filtered-offers', getFilteredEvents);
 router.get('/get-filtered-shops', getFilteredShops);
 router.get('/search-products', searchProducts);
 router.get('/top-shops', topShops);
+router.get('/get-all-events', getAllEvents);
+
 
 
 

@@ -42,7 +42,7 @@ export default function ShopCard({ shop }: ShopCardProps) {
           <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
           <span className="font-medium">{shop.ratings.toFixed(1)}</span>
           <span className="text-gray-500">
-            ({shop.followersCount} followers)
+            {/* ({shop.followersCount} followers) */}
           </span>
         </div>
 
@@ -60,7 +60,7 @@ export default function ShopCard({ shop }: ShopCardProps) {
           </span>
 
           <span className="text-xs font-medium text-blue-600">
-            {shop.productsCount} Products
+            {/* {shop.productsCount} Products */}
           </span>
         </div>
       </div>

@@ -7,7 +7,7 @@ interface ShopCardProps {
     bio?: string;
     country?: string;
     ratings: number;
-    followersCount: number;
-    productsCount: number;
+    // followersCount: number;
+    // productsCount: number;
   };
 }
